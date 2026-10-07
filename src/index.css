@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens de diseño. El sentimiento es una variable de POLARIDAD, así que usa una escala
+ * divergente: azul (positivo) ↔ gris neutro ↔ rojo (negativo). Paleta validada para
+ * daltonismo (ΔE CVD ≥ 11 en claro, ≥ 14 en oscuro); el gris lleva etiquetas visibles.
+ */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-surface: #f6f6f4;
+  --color-card: #fcfcfb;
+  --color-ink: #0b0b0b;
+  --color-ink-2: #52514e;
+  --color-ink-3: #7a7973;
+  --color-line: #e4e3df;
+  --color-brand: #1c5cab;
+  --color-brand-strong: #184f95;
+  --color-brand-soft: #e6effb;
+
+  --color-pos: #2a78d6;
+  --color-neu: #a3a19a;
+  --color-neg: #e34948;
+
+  --color-critical: #d03b3b;
+  --color-warning: #b27300;
+  --color-good: #0a7f0a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #121211;
+    --color-card: #1a1a19;
+    --color-ink: #ffffff;
+    --color-ink-2: #c3c2b7;
+    --color-ink-3: #93928a;
+    --color-line: #2e2e2b;
+    --color-brand: #5598e7;
+    --color-brand-strong: #86b6ef;
+    --color-brand-soft: #1b2a3d;
+
+    --color-pos: #3987e5;
+    --color-neu: #56554f;
+    --color-neg: #e66767;
+
+    --color-critical: #e66767;
+    --color-warning: #fab219;
+    --color-good: #3fbf3f;
+  }
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
