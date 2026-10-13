@@ -4,6 +4,7 @@ import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import type { AnalysisRun, Dashboard } from '../api/types';
 import { SentimentBar, TopicChart } from '../components/charts';
+import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
 import { Icon } from '../components/icons';
 import { ImportPanel } from '../components/ImportPanel';
 import { KpiTiles, RecommendationList, TopicQuotes } from '../components/insights';
@@ -75,6 +76,9 @@ export function DashboardPage() {
   const { business, report, latestRun, reportRun } = dashboard;
   const selectedTopic = report?.stats.topics.find((t) => t.key === topicFilter) ?? null;
   const usesLlm = reportRun?.provider.startsWith('claude:') ?? false;
+  const comparison = dashboard.comparison;
+  const topComplaintKey = report ? [...report.stats.topics].sort((a, b) => b.complaintShare - a.complaintShare)[0]?.key : undefined;
+  const topComplaintChange = comparison?.topics.find((t) => t.key === topComplaintKey);
 
   return (
     <div className="space-y-6">
@@ -122,7 +126,22 @@ export function DashboardPage() {
 
       {report ? (
         <>
-          <KpiTiles report={report} />
+          <KpiTiles
+            report={report}
+            extras={
+              comparison
+                ? {
+                    total: <span className="text-xs text-ink-3">Antes: {comparison.previousTotalReviews} reseñas</span>,
+                    positive: <Delta value={comparison.positiveShareDelta} goodWhen="up" />,
+                    negative: <Delta value={comparison.negativeShareDelta} goodWhen="down" />,
+                    complaint:
+                      topComplaintChange?.complaintDelta != null ? (
+                        <Delta value={topComplaintChange.complaintDelta} goodWhen="down" />
+                      ) : undefined,
+                  }
+                : undefined
+            }
+          />
 
           <div className="grid gap-6 lg:grid-cols-5">
             <Card
@@ -149,6 +168,31 @@ export function DashboardPage() {
                 <TopicChart topics={report.stats.topics} selected={topicFilter} onSelect={setTopicFilter} />
               </Card>
             </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-5">
+            <Card
+              title="Evolución desde el análisis anterior"
+              icon="chart"
+              subtitle={
+                dashboard.previousRun
+                  ? `Comparado con el análisis del ${formatDate(dashboard.previousRun.createdAt)}`
+                  : 'Aparece cuando tengas al menos dos análisis'
+              }
+              className="lg:col-span-3"
+            >
+              {comparison ? (
+                <TopicEvolution comparison={comparison} />
+              ) : (
+                <p className="text-sm text-ink-2">
+                  Carga las reseñas nuevas de las próximas semanas y vuelve a analizar: aquí verás si las quejas bajan o suben
+                  después de aplicar las recomendaciones.
+                </p>
+              )}
+            </Card>
+            <Card title="Historial de análisis" icon="clock" className="h-fit lg:col-span-2 print:hidden">
+              <AnalysisHistory runs={dashboard.history} currentId={reportRun?.id ?? null} />
+            </Card>
           </div>
         </>
       ) : (

@@ -71,6 +71,26 @@ export interface InsightReport {
   recommendations: Recommendation[];
 }
 
+export type TopicTrend = 'new' | 'resolved' | 'improved' | 'worsened' | 'stable';
+
+export interface TopicChange {
+  key: string;
+  name: string;
+  complaintShare: number;
+  previousComplaintShare: number | null;
+  complaintDelta: number | null;
+  trend: TopicTrend;
+}
+
+/** Variación respecto al análisis anterior (puntos porcentuales). */
+export interface InsightComparison {
+  previousTotalReviews: number;
+  positiveShareDelta: number;
+  negativeShareDelta: number;
+  averageScoreDelta: number;
+  topics: TopicChange[];
+}
+
 export interface Dashboard {
   business: Business;
   reviewCount: number;
@@ -78,6 +98,8 @@ export interface Dashboard {
   reportRun: AnalysisRun | null;
   report: InsightReport | null;
   history: AnalysisRun[];
+  previousRun: AnalysisRun | null;
+  comparison: InsightComparison | null;
 }
 
 export interface ReviewItem {
