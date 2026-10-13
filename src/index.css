@@ -92,6 +92,25 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Reporte impreso / "Guardar como PDF" */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  li,
+  tr {
+    break-inside: avoid;
+  }
+  .shadow-card {
+    box-shadow: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

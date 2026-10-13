@@ -141,7 +141,7 @@ export function TopicChart({ topics, selected, onSelect }: { topics: TopicStat[]
           );
         })}
       </ul>
-      <p className="text-xs text-ink-3">Haz clic en un tema para filtrar las reseñas.</p>
+      <p className="text-xs text-ink-3 print:hidden">Haz clic en un tema para filtrar las reseñas.</p>
       {node}
     </div>
   );

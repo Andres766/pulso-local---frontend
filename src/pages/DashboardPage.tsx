@@ -11,6 +11,7 @@ import { KpiTiles, RecommendationList, TopicQuotes } from '../components/insight
 import { ReviewsTable } from '../components/ReviewsTable';
 import { Alert, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '../components/ui';
 import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
+import { printReport, saveBlob } from '../hooks/exporting';
 import { categoryLabel } from './BusinessesPage';
 
 export const providerLabel = (p: string) => (p.startsWith('claude:') ? `Claude · ${p.slice(7)}` : 'Analizador léxico local');
@@ -40,6 +41,7 @@ export function DashboardPage() {
   const [starting, setStarting] = useState(false);
   const [topicFilter, setTopicFilter] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -70,6 +72,19 @@ export function DashboardPage() {
     }
   }
 
+  async function exportCsv() {
+    setExporting(true);
+    setError(null);
+    try {
+      const { blob, filename } = await api.reviews.exportCsv(id);
+      saveBlob(blob, filename ?? 'resenas.csv');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo exportar');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!dashboard && !error) return <DashboardSkeleton />;
   if (!dashboard) return <Alert>{error}</Alert>;
 
@@ -82,6 +97,12 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Encabezado que solo aparece en el reporte impreso / PDF */}
+      <div className="hidden border-b border-line pb-4 print:block">
+        <p className="text-xs uppercase tracking-wide text-ink-3">Reporte de PulsoLocal</p>
+        <p className="text-sm text-ink-2">Generado el {new Date().toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}</p>
+      </div>
+
       <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink print:hidden">
         <Icon name="chevronLeft" /> Mis negocios
       </Link>
@@ -107,6 +128,12 @@ export function DashboardPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
+          <Button variant="secondary" icon="download" onClick={exportCsv} loading={exporting} disabled={dashboard.reviewCount === 0}>
+            CSV
+          </Button>
+          <Button variant="secondary" icon="printer" onClick={printReport} disabled={!report}>
+            Reporte PDF
+          </Button>
           <Button onClick={startAnalysis} icon="sparkles" loading={starting || Boolean(running)} disabled={dashboard.reviewCount === 0}>
             {running ? 'Analizando…' : report ? 'Volver a analizar' : 'Analizar con IA'}
           </Button>

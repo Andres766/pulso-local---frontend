@@ -51,6 +51,9 @@ export class ReviewService {
   paste(businessId: string, text: string) {
     return this.client.post<ImportSummary>(`/businesses/${encodeURIComponent(businessId)}/reviews/text`, { text });
   }
+  exportCsv(businessId: string) {
+    return this.client.download(`/businesses/${encodeURIComponent(businessId)}/reviews/export`);
+  }
   clear(businessId: string) { return this.client.delete<{ deleted: number }>(`/businesses/${encodeURIComponent(businessId)}/reviews`); }
 }
 

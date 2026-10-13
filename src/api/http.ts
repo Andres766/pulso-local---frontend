@@ -44,6 +44,22 @@ export class HttpClient {
     return this.request<T>('DELETE', path);
   }
 
+  /** Descarga un archivo (blob) con la misma sesión y manejo de errores que el resto de la API. */
+  async download(path: string): Promise<{ blob: Blob; filename: string | null }> {
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, { headers: HttpClient.CSRF_HEADER, credentials: 'same-origin' });
+    } catch {
+      throw new ApiError(0, 'NETWORK_ERROR', 'No se pudo conectar con el servidor');
+    }
+    if (!response.ok) {
+      const err = (await response.json().catch(() => null))?.error;
+      throw new ApiError(response.status, err?.code ?? 'UNKNOWN', err?.message ?? 'No se pudo descargar el archivo');
+    }
+    const match = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '');
+    return { blob: await response.blob(), filename: match?.[1] ?? null };
+  }
+
   private async request<T>(method: string, path: string, body?: Json | FormData): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json', ...HttpClient.CSRF_HEADER };
     let payload: BodyInit | undefined;
