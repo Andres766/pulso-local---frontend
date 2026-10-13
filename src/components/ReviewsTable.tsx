@@ -44,7 +44,7 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
     };
   }, [businessId, sentiment, topicFilter, query, offset, refreshKey]);
 
-  const selectClass = 'rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none';
+  const selectClass = 'rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15';
 
   return (
     <div className="space-y-3">
@@ -93,7 +93,7 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
                 )}
                 {r.rating && <span aria-label={`${r.rating} de 5 estrellas`}>{'★'.repeat(r.rating)}<span className="text-line">{'★'.repeat(5 - r.rating)}</span></span>}
                 {r.topics.map((t) => (
-                  <span key={t} className="rounded-full bg-surface px-2 py-0.5">{t}</span>
+                  <span key={t} className="rounded-full bg-raised px-2 py-0.5">{t}</span>
                 ))}
                 <span className="text-ink-3">{new Date(r.authoredAt ?? r.createdAt).toLocaleDateString('es-CO')}</span>
               </div>

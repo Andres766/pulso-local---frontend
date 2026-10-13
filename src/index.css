@@ -1,62 +1,102 @@
 @import 'tailwindcss';
 
+/* El modo oscuro lo controla data-theme en <html> (claro / oscuro / según el sistema). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 /*
- * Tokens de diseño. El sentimiento es una variable de POLARIDAD, así que usa una escala
- * divergente: azul (positivo) ↔ gris neutro ↔ rojo (negativo). Paleta validada para
- * daltonismo (ΔE CVD ≥ 11 en claro, ≥ 14 en oscuro); el gris lleva etiquetas visibles.
+ * Tokens de diseño. El sentimiento es una variable de POLARIDAD → escala divergente:
+ * azul (positivo) ↔ gris neutro ↔ rojo (negativo). Paleta validada para daltonismo
+ * (ΔE CVD ≥ 11 en claro, ≥ 14 en oscuro); el gris siempre lleva etiqueta visible.
  */
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  --color-surface: #f6f6f4;
-  --color-card: #fcfcfb;
-  --color-ink: #0b0b0b;
-  --color-ink-2: #52514e;
-  --color-ink-3: #7a7973;
-  --color-line: #e4e3df;
+  --color-surface: #f4f5f7;
+  --color-card: #ffffff;
+  --color-raised: #f9fafb;
+  --color-ink: #0f1115;
+  --color-ink-2: #4b4f58;
+  --color-ink-3: #7c808a;
+  --color-line: #e3e5ea;
   --color-brand: #1c5cab;
-  --color-brand-strong: #184f95;
-  --color-brand-soft: #e6effb;
+  --color-brand-strong: #164a8a;
+  --color-brand-soft: #e8f0fb;
+  --color-on-brand: #ffffff;
 
   --color-pos: #2a78d6;
   --color-neu: #a3a19a;
   --color-neg: #e34948;
 
-  --color-critical: #d03b3b;
-  --color-warning: #b27300;
+  --color-critical: #c93434;
+  --color-critical-soft: #fdecec;
+  --color-warning: #a86b00;
+  --color-warning-soft: #fdf3dc;
   --color-good: #0a7f0a;
+  --color-good-soft: #e5f6e5;
+
+  --shadow-card: 0 1px 2px rgb(15 17 21 / 0.04), 0 4px 16px -8px rgb(15 17 21 / 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-surface: #121211;
-    --color-card: #1a1a19;
-    --color-ink: #ffffff;
+@layer base {
+  /* Tema oscuro: valores propios (no una inversión automática), validados contra la superficie oscura. */
+  :root[data-theme='dark'] {
+    --color-surface: #0f1012;
+    --color-card: #17181b;
+    --color-raised: #1d1f23;
+    --color-ink: #f5f5f4;
     --color-ink-2: #c3c2b7;
-    --color-ink-3: #93928a;
-    --color-line: #2e2e2b;
+    --color-ink-3: #8f8e87;
+    --color-line: #2a2c31;
     --color-brand: #5598e7;
     --color-brand-strong: #86b6ef;
-    --color-brand-soft: #1b2a3d;
+    --color-brand-soft: #182436;
+    --color-on-brand: #0b1220;
 
     --color-pos: #3987e5;
     --color-neu: #56554f;
     --color-neg: #e66767;
 
-    --color-critical: #e66767;
-    --color-warning: #fab219;
-    --color-good: #3fbf3f;
+    --color-critical: #ef7a7a;
+    --color-critical-soft: #2d1a1a;
+    --color-warning: #f2b23a;
+    --color-warning-soft: #2b2314;
+    --color-good: #57c957;
+    --color-good-soft: #172617;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--color-surface);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,24 +1,40 @@
+import type { ReactNode } from 'react';
 import type { InsightReport, Priority, Recommendation, TopicStat } from '../api/types';
+import { Icon, type IconName } from './icons';
 
-const PRIORITY: Record<Priority, { label: string; icon: string; className: string }> = {
-  alta: { label: 'Prioridad alta', icon: '▲', className: 'text-critical' },
-  media: { label: 'Prioridad media', icon: '●', className: 'text-warning' },
-  baja: { label: 'Prioridad baja', icon: '▽', className: 'text-ink-3' },
+const PRIORITY: Record<Priority, { label: string; icon: IconName; text: string; bar: string; chip: string }> = {
+  alta: { label: 'Prioridad alta', icon: 'alert', text: 'text-critical', bar: 'bg-critical', chip: 'bg-critical-soft text-critical' },
+  media: { label: 'Prioridad media', icon: 'clock', text: 'text-warning', bar: 'bg-warning', chip: 'bg-warning-soft text-warning' },
+  baja: { label: 'Prioridad baja', icon: 'check', text: 'text-ink-3', bar: 'bg-line', chip: 'bg-raised text-ink-2' },
 };
 
-export function KpiTiles({ report }: { report: InsightReport }) {
+interface Tile {
+  label: string;
+  value: string;
+  note: string;
+  icon: IconName;
+  iconClass: string;
+  small?: boolean;
+  extra?: ReactNode;
+}
+
+export function KpiTiles({ report, extras = {} }: { report: InsightReport; extras?: Partial<Record<'total' | 'positive' | 'negative' | 'complaint', ReactNode>> }) {
   const { sentiment, totalReviews, topics } = report.stats;
   const share = (n: number) => (totalReviews === 0 ? 0 : Math.round((n / totalReviews) * 100));
   const topComplaint = [...topics].sort((a, b) => b.complaintShare - a.complaintShare)[0];
+  const hasComplaint = Boolean(topComplaint && topComplaint.complaintShare > 0);
 
-  const tiles = [
-    { label: 'Reseñas analizadas', value: totalReviews.toString(), note: `${topics.length} temas detectados` },
-    { label: 'Clientes satisfechos', value: `${share(sentiment.positive)}%`, note: `${sentiment.positive} reseñas positivas` },
-    { label: 'Clientes insatisfechos', value: `${share(sentiment.negative)}%`, note: `${sentiment.negative} reseñas negativas` },
+  const tiles: (Tile & { key: keyof typeof extras })[] = [
+    { key: 'total', label: 'Reseñas analizadas', value: totalReviews.toString(), note: `${topics.length} temas detectados`, icon: 'message', iconClass: 'bg-brand-soft text-brand' },
+    { key: 'positive', label: 'Clientes satisfechos', value: `${share(sentiment.positive)}%`, note: `${sentiment.positive} reseñas positivas`, icon: 'smile', iconClass: 'bg-brand-soft text-pos' },
+    { key: 'negative', label: 'Clientes insatisfechos', value: `${share(sentiment.negative)}%`, note: `${sentiment.negative} reseñas negativas`, icon: 'frown', iconClass: 'bg-critical-soft text-neg' },
     {
+      key: 'complaint',
       label: 'Principal queja',
-      value: topComplaint && topComplaint.complaintShare > 0 ? topComplaint.name : '—',
-      note: topComplaint && topComplaint.complaintShare > 0 ? `${topComplaint.complaintShare}% de las reseñas` : 'Sin quejas recurrentes',
+      value: hasComplaint ? topComplaint!.name : 'Sin quejas',
+      note: hasComplaint ? `${topComplaint!.complaintShare}% de las reseñas` : 'No hay quejas recurrentes',
+      icon: 'target',
+      iconClass: 'bg-warning-soft text-warning',
       small: true,
     },
   ];
@@ -26,10 +42,16 @@ export function KpiTiles({ report }: { report: InsightReport }) {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {tiles.map((t) => (
-        <div key={t.label} className="rounded-2xl border border-line bg-card p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-3">{t.label}</p>
-          <p className={`mt-1 font-semibold tabular-nums text-ink ${t.small ? 'text-lg leading-7' : 'text-3xl'}`}>{t.value}</p>
+        <div key={t.label} className="rounded-2xl border border-line bg-card p-4 shadow-card sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">{t.label}</p>
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${t.iconClass}`}>
+              <Icon name={t.icon} />
+            </span>
+          </div>
+          <p className={`mt-2 font-display font-extrabold tabular-nums text-ink ${t.small ? 'text-lg leading-7' : 'text-3xl'}`}>{t.value}</p>
           <p className="mt-1 text-xs text-ink-2">{t.note}</p>
+          {extras[t.key] && <div className="mt-2">{extras[t.key]}</div>}
         </div>
       ))}
     </div>
@@ -45,24 +67,30 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
       {items.map((r) => {
         const p = PRIORITY[r.priority];
         return (
-          <li key={r.rank} className="rounded-xl border border-line p-4">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-              <span className={`inline-flex items-center gap-1 font-semibold ${p.className}`}>
-                <span aria-hidden>{p.icon}</span>
+          <li key={r.rank} className="relative overflow-hidden rounded-xl border border-line bg-raised/50 p-4 pl-5 break-inside-avoid">
+            <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${p.bar}`} />
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${p.chip}`}>
+                <Icon name={p.icon} className="h-3 w-3" />
                 {p.label}
               </span>
               {r.topicKey && topicName.has(r.topicKey) && (
-                <span className="rounded-full bg-surface px-2 py-0.5 text-ink-2">{topicName.get(r.topicKey)}</span>
-              )}
-              {r.evidenceShare !== null && r.evidenceShare > 0 && (
-                <span className="text-ink-3">Respaldo: {r.evidenceShare}% de las reseñas se quejan de esto</span>
+                <span className="rounded-full border border-line bg-card px-2 py-0.5 text-ink-2">{topicName.get(r.topicKey)}</span>
               )}
             </div>
-            <h3 className="mt-2 font-semibold text-ink">
-              <span className="mr-2 tabular-nums text-ink-3">{r.rank}.</span>
+            <h3 className="mt-2.5 flex gap-2 font-bold text-ink">
+              <span className="tabular-nums text-ink-3">{r.rank}.</span>
               {r.title}
             </h3>
             <p className="mt-1 text-sm leading-relaxed text-ink-2">{r.detail}</p>
+            {r.evidenceShare !== null && r.evidenceShare > 0 && (
+              <p className="mt-3 flex items-center gap-2 text-xs text-ink-3">
+                <span className="h-1.5 w-24 overflow-hidden rounded-full bg-line">
+                  <span className={`block h-full rounded-full ${p.bar}`} style={{ width: `${Math.min(100, r.evidenceShare * 2)}%` }} />
+                </span>
+                Quejas sobre este tema: {r.evidenceShare}% de las reseñas
+              </p>
+            )}
           </li>
         );
       })}
@@ -73,11 +101,13 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
 export function TopicQuotes({ topic }: { topic: TopicStat }) {
   if (topic.sampleQuotes.length === 0) return null;
   return (
-    <div className="rounded-xl bg-surface p-4">
-      <p className="text-sm font-medium text-ink">Lo que dicen sobre «{topic.name}»</p>
+    <div className="rounded-xl border border-line bg-raised p-4">
+      <p className="text-sm font-semibold text-ink">Lo que dicen sobre «{topic.name}»</p>
       <ul className="mt-2 space-y-2">
         {topic.sampleQuotes.map((q) => (
-          <li key={q} className="border-l-2 border-line pl-3 text-sm italic text-ink-2">“{q}”</li>
+          <li key={q} className="border-l-2 border-brand/40 pl-3 text-sm italic text-ink-2">
+            “{q}”
+          </li>
         ))}
       </ul>
     </div>

@@ -46,7 +46,7 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
 
   return (
     <div className="space-y-3">
-      <div className="inline-flex rounded-lg bg-surface p-1" role="tablist">
+      <div className="inline-flex rounded-lg bg-raised p-1" role="tablist">
         <button role="tab" aria-selected={tab === 'csv'} className={tabClass(tab === 'csv')} onClick={() => setTab('csv')}>Archivo CSV</button>
         <button role="tab" aria-selected={tab === 'text'} className={tabClass(tab === 'text')} onClick={() => setTab('text')}>Pegar texto</button>
       </div>

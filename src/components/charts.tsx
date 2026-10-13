@@ -112,7 +112,7 @@ export function TopicChart({ topics, selected, onSelect }: { topics: TopicStat[]
                 type="button"
                 onClick={() => onSelect(isSelected ? null : t.key)}
                 aria-pressed={isSelected}
-                className={`group w-full rounded-lg p-2 text-left transition-colors ${isSelected ? 'bg-brand-soft' : 'hover:bg-surface'}`}
+                className={`group w-full rounded-lg p-2 text-left transition-colors ${isSelected ? 'bg-brand-soft' : 'hover:bg-raised'}`}
               >
                 <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
                   <span className="font-medium text-ink" title={t.description}>{t.name}</span>
