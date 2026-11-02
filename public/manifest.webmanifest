@@ -1,0 +1,16 @@
+{
+  "name": "PulsoLocal",
+  "short_name": "PulsoLocal",
+  "description": "Convierte las reseñas de tus clientes en recomendaciones concretas para tu negocio.",
+  "lang": "es-CO",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#1c5cab",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

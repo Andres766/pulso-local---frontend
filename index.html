@@ -1,16 +1,27 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-CO">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="PulsoLocal: convierte las reseñas de tus clientes en recomendaciones concretas." />
+    <meta name="description" content="PulsoLocal: convierte las reseñas de tus clientes en recomendaciones concretas para tu negocio, con inteligencia artificial." />
+    <!-- Color de la barra del navegador en el celular, según el tema del sistema -->
+    <meta name="theme-color" content="#1c5cab" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17181b" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Vista previa al compartir el enlace -->
+    <meta property="og:title" content="PulsoLocal" />
+    <meta property="og:description" content="Tus clientes ya te dijeron qué mejorar. PulsoLocal lo convierte en un plan de acción." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CO" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
     <title>PulsoLocal</title>
   </head>
   <body>
+    <noscript>PulsoLocal necesita JavaScript para funcionar.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
