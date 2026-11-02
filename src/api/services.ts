@@ -62,6 +62,9 @@ export class ReviewService {
   exportCsv(businessId: string) {
     return this.client.download(`/businesses/${encodeURIComponent(businessId)}/reviews/export`);
   }
+  remove(businessId: string, reviewId: string) {
+    return this.client.delete<void>(`/businesses/${encodeURIComponent(businessId)}/reviews/${encodeURIComponent(reviewId)}`);
+  }
   clear(businessId: string) {
     return this.client.delete<{ deleted: number }>(`/businesses/${encodeURIComponent(businessId)}/reviews`);
   }

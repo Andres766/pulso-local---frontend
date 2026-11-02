@@ -271,6 +271,7 @@ export function DashboardPage() {
             topicFilter={topicFilter}
             onTopicFilter={setTopicFilter}
             refreshKey={refreshKey}
+            onChanged={() => void load()}
           />
         </Card>
         <Card

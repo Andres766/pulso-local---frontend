@@ -35,7 +35,7 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
       setText('');
       setFile(null);
       if (fileInput.current) fileInput.current.value = '';
-      toast.success(`${result.imported} reseñas importadas.`);
+      toast.success(result.imported === 1 ? '1 reseña importada.' : `${result.imported} reseñas importadas.`);
       onImported();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo importar');

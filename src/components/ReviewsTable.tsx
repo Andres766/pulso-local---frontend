@@ -3,6 +3,9 @@ import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import type { ReviewItem, SentimentLabel, TopicStat } from '../api/types';
 import { SENTIMENT_META } from './charts';
+import { useConfirm } from './confirm';
+import { Icon } from './icons';
+import { useToast } from './toast';
 import { Alert, Button, Spinner } from './ui';
 
 const PAGE = 10;
@@ -13,16 +16,35 @@ interface Props {
   topicFilter: string | null;
   onTopicFilter: (key: string | null) => void;
   refreshKey: number;
+  /** Se llama tras borrar una reseña, para que el dashboard actualice sus contadores. */
+  onChanged?: () => void;
 }
 
 /** Vista de tabla de las reseñas: además de filtrar, es la alternativa accesible a los gráficos. */
-export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, refreshKey }: Props) {
+export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, refreshKey, onChanged }: Props) {
   const [sentiment, setSentiment] = useState<SentimentLabel | ''>('');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState(0);
   const [data, setData] = useState<{ total: number; items: ReviewItem[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const toast = useToast();
+
+  async function removeReview(review: ReviewItem) {
+    const preview = review.content.length > 90 ? `${review.content.slice(0, 90)}…` : review.content;
+    const ok = await confirm({ title: '¿Eliminar esta reseña?', message: `«${preview}»`, confirmLabel: 'Eliminar', danger: true });
+    if (!ok) return;
+    try {
+      await api.reviews.remove(businessId, review.id);
+      toast.success('Reseña eliminada.');
+      // Si era la última de la página, se vuelve a la anterior.
+      if (data && data.items.length === 1 && offset > 0) setOffset(offset - PAGE);
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'No se pudo eliminar la reseña');
+    }
+  }
 
   // Debounce de la búsqueda para no disparar una petición por cada tecla.
   useEffect(() => {
@@ -109,30 +131,41 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
       ) : (
         <ul className="divide-y divide-line">
           {data.items.map((r) => (
-            <li key={r.id} className="py-3">
-              <p className="text-sm text-ink">{r.content}</p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-2">
-                {r.sentiment ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className={`h-2 w-2 rounded-full ${SENTIMENT_META[r.sentiment].swatch}`} aria-hidden />
-                    {SENTIMENT_META[r.sentiment].label}
-                  </span>
-                ) : (
-                  <span className="text-ink-3">Sin analizar</span>
-                )}
-                {r.rating && (
-                  <span role="img" aria-label={`${r.rating} de 5 estrellas`}>
-                    {'★'.repeat(r.rating)}
-                    <span className="text-line">{'★'.repeat(5 - r.rating)}</span>
-                  </span>
-                )}
-                {r.topics.map((t) => (
-                  <span key={t} className="rounded-full bg-raised px-2 py-0.5">
-                    {t}
-                  </span>
-                ))}
-                <span className="text-ink-3">{new Date(r.authoredAt ?? r.createdAt).toLocaleDateString('es-CO')}</span>
+            <li key={r.id} className="group flex gap-3 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-ink">{r.content}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-2">
+                  {r.sentiment ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className={`h-2 w-2 rounded-full ${SENTIMENT_META[r.sentiment].swatch}`} aria-hidden />
+                      {SENTIMENT_META[r.sentiment].label}
+                    </span>
+                  ) : (
+                    <span className="text-ink-3">Sin analizar</span>
+                  )}
+                  {r.rating && (
+                    <span role="img" aria-label={`${r.rating} de 5 estrellas`}>
+                      {'★'.repeat(r.rating)}
+                      <span className="text-line">{'★'.repeat(5 - r.rating)}</span>
+                    </span>
+                  )}
+                  {r.topics.map((t) => (
+                    <span key={t} className="rounded-full bg-raised px-2 py-0.5">
+                      {t}
+                    </span>
+                  ))}
+                  <span className="text-ink-3">{new Date(r.authoredAt ?? r.createdAt).toLocaleDateString('es-CO')}</span>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => void removeReview(r)}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-3 opacity-60 transition hover:bg-critical-soft hover:text-critical focus-visible:opacity-100 group-hover:opacity-100 print:hidden"
+                aria-label="Eliminar reseña"
+                title="Eliminar reseña"
+              >
+                <Icon name="trash" />
+              </button>
             </li>
           ))}
         </ul>
