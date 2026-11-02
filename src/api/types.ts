@@ -114,6 +114,16 @@ export interface ReviewItem {
   topics: string[];
 }
 
+export const REVIEW_SORTS = [
+  { value: 'recent', label: 'Más recientes' },
+  { value: 'oldest', label: 'Más antiguas' },
+  { value: 'most_negative', label: 'Más negativas primero' },
+  { value: 'most_positive', label: 'Más positivas primero' },
+  { value: 'rating_asc', label: 'Menos estrellas primero' },
+  { value: 'rating_desc', label: 'Más estrellas primero' },
+] as const;
+export type ReviewSort = (typeof REVIEW_SORTS)[number]['value'];
+
 export interface ImportSummary {
   received: number;
   imported: number;

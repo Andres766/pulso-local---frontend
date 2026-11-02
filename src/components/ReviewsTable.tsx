@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ApiError } from '../api/http';
 import { api } from '../api/services';
-import type { ReviewItem, SentimentLabel, TopicStat } from '../api/types';
+import { REVIEW_SORTS, type ReviewItem, type ReviewSort, type SentimentLabel, type TopicStat } from '../api/types';
 import { SENTIMENT_META } from './charts';
 import { useConfirm } from './confirm';
 import { Icon } from './icons';
@@ -23,6 +23,8 @@ interface Props {
 /** Vista de tabla de las reseñas: además de filtrar, es la alternativa accesible a los gráficos. */
 export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, refreshKey, onChanged }: Props) {
   const [sentiment, setSentiment] = useState<SentimentLabel | ''>('');
+  const [rating, setRating] = useState<number | ''>('');
+  const [sort, setSort] = useState<ReviewSort>('recent');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState(0);
@@ -67,13 +69,21 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
     let cancelled = false;
     setError(null);
     api.reviews
-      .list(businessId, { sentiment: sentiment || undefined, topic: topicFilter ?? undefined, q: query || undefined, limit: PAGE, offset })
+      .list(businessId, {
+        sentiment: sentiment || undefined,
+        topic: topicFilter ?? undefined,
+        q: query || undefined,
+        rating: rating || undefined,
+        sort,
+        limit: PAGE,
+        offset,
+      })
       .then((d) => !cancelled && setData(d))
       .catch((e) => !cancelled && setError(e instanceof ApiError ? e.message : 'Error al cargar reseñas'));
     return () => {
       cancelled = true;
     };
-  }, [businessId, sentiment, topicFilter, query, offset, refreshKey]);
+  }, [businessId, sentiment, topicFilter, query, rating, sort, offset, refreshKey]);
 
   const selectClass =
     'rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15';
@@ -116,6 +126,37 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           {topics.map((t) => (
             <option key={t.key} value={t.key}>
               {t.name}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filtrar por estrellas"
+          value={rating}
+          onChange={(e) => {
+            setRating(e.target.value ? Number(e.target.value) : '');
+            setOffset(0);
+          }}
+          className={selectClass}
+        >
+          <option value="">Todas las estrellas</option>
+          {[5, 4, 3, 2, 1].map((n) => (
+            <option key={n} value={n}>
+              {'★'.repeat(n)} ({n})
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Ordenar reseñas"
+          value={sort}
+          onChange={(e) => {
+            setSort(e.target.value as ReviewSort);
+            setOffset(0);
+          }}
+          className={selectClass}
+        >
+          {REVIEW_SORTS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
             </option>
           ))}
         </select>

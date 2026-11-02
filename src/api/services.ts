@@ -1,5 +1,15 @@
 import { type HttpClient, http } from './http';
-import type { AnalysisRun, Business, BusinessCategory, Dashboard, ImportSummary, ReviewItem, SentimentLabel, User } from './types';
+import type {
+  AnalysisRun,
+  Business,
+  BusinessCategory,
+  Dashboard,
+  ImportSummary,
+  ReviewItem,
+  ReviewSort,
+  SentimentLabel,
+  User,
+} from './types';
 
 /** Servicios por recurso: los componentes llaman métodos con nombre, no URLs. */
 
@@ -42,6 +52,8 @@ export interface ReviewQuery {
   sentiment?: SentimentLabel;
   topic?: string;
   q?: string;
+  rating?: number;
+  sort?: ReviewSort;
   limit: number;
   offset: number;
 }
