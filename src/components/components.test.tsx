@@ -6,7 +6,7 @@ import { describeProvider, providerLabel } from '../api/providers';
 import { ConfirmProvider, useConfirm } from './confirm';
 import { buildCsvTemplate } from './csvTemplate';
 import { ErrorBoundary } from './ErrorBoundary';
-import { Delta, TopicEvolution } from './evolution';
+import { AnalysisHistory, Delta, TopicEvolution } from './evolution';
 import { passwordChecks } from './PasswordChecklist';
 import { ThemeToggle } from './ThemeToggle';
 import { ToastProvider, useToast } from './toast';
@@ -209,5 +209,38 @@ describe('passwordChecks', () => {
   it('mide el máximo en bytes, no en caracteres (las tildes ocupan 2 bytes)', () => {
     expect(ok(`${'á'.repeat(36)}1`).max).toBe(false); // 37 caracteres pero 73 bytes
     expect(ok(`${'a'.repeat(70)}12`).max).toBe(true);
+  });
+});
+
+describe('AnalysisHistory', () => {
+  const base = {
+    provider: 'gemini:gemini-3.5-flash',
+    reviewCount: 44,
+    error: null,
+    createdAt: '2026-11-02T20:00:00Z',
+    startedAt: null,
+    finishedAt: null,
+  };
+
+  it('muestra el consumo de IA, los intentos y los reintentos en curso', () => {
+    render(
+      <AnalysisHistory
+        currentId="a"
+        runs={[
+          {
+            ...base,
+            id: 'b',
+            status: 'pending',
+            attempts: 1,
+            error: 'El servicio de IA está saturado.',
+            usage: { calls: 1, inputTokens: 900, outputTokens: 100 },
+          },
+          { ...base, id: 'a', status: 'completed', attempts: 2, usage: { calls: 4, inputTokens: 5169, outputTokens: 6046 } },
+        ]}
+      />,
+    );
+    expect(screen.getByText('Reintentando')).toBeInTheDocument();
+    expect(screen.getByText(/4 llamadas a la IA · 11,2 mil tokens/)).toBeInTheDocument();
+    expect(screen.getByText(/2 intentos/)).toBeInTheDocument();
   });
 });

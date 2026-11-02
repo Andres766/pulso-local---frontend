@@ -37,10 +37,16 @@ export interface AnalysisRun {
   provider: string;
   reviewCount: number;
   error: string | null;
+  /** Intentos usados (la cola reintenta hasta 3 veces ante errores transitorios de la IA). */
+  attempts: number;
+  /** Consumo del modelo de lenguaje sumado en todos los intentos. */
+  usage: { calls: number; inputTokens: number; outputTokens: number };
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
 }
+
+export const MAX_ANALYSIS_ATTEMPTS = 3;
 
 export interface TopicStat {
   key: string;

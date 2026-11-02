@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router';
 import { ApiError } from '../api/http';
 import { describeProvider, providerLabel } from '../api/providers';
 import { api } from '../api/services';
-import { type AnalysisRun, categoryLabel, type Dashboard } from '../api/types';
+import { type AnalysisRun, categoryLabel, type Dashboard, MAX_ANALYSIS_ATTEMPTS } from '../api/types';
 import { BusinessSettings } from '../components/BusinessSettings';
 import { Legend, SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
@@ -63,11 +63,15 @@ export function DashboardPage() {
 
   const running = dashboard?.latestRun && ['pending', 'running'].includes(dashboard.latestRun.status) ? dashboard.latestRun : null;
   const toast = useToast();
-  useAnalysisPolling(running, (finished) => {
-    if (finished.status === 'completed') toast.success('Análisis completado: el reporte ya está actualizado.');
-    else toast.error('El análisis no se pudo completar.');
-    void load();
+  useAnalysisPolling(running, {
+    onProgress: (current) => setDashboard((d) => (d ? { ...d, latestRun: current } : d)),
+    onFinished: (finished) => {
+      if (finished.status === 'completed') toast.success('Análisis completado: el reporte ya está actualizado.');
+      else toast.error('El análisis no se pudo completar.');
+      void load();
+    },
   });
+  const retrying = running?.status === 'pending' && running.attempts > 0;
 
   async function startAnalysis() {
     setStarting(true);
@@ -167,8 +171,10 @@ export function DashboardPage() {
       {running && (
         <Alert tone="info">
           <span className="inline-flex items-center gap-2">
-            <Spinner className="h-4 w-4" /> La IA está leyendo {running.reviewCount} reseñas: detecta temas, clasifica el sentimiento y
-            redacta recomendaciones…
+            <Spinner className="h-4 w-4" />
+            {retrying
+              ? `El servicio de IA estaba ocupado: se reintentará en unos segundos (intento ${running.attempts + 1} de ${MAX_ANALYSIS_ATTEMPTS}). ${running.error ?? ''}`
+              : `La IA está leyendo ${running.reviewCount} reseñas: detecta temas, clasifica el sentimiento y redacta recomendaciones…`}
           </span>
         </Alert>
       )}

@@ -105,6 +105,9 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
   );
 }
 
+/** 11215 → "11,2 mil": cifra legible para el dueño del negocio. */
+const formatTokens = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString('es-CO', { maximumFractionDigits: 1 })} mil` : String(n));
+
 const STATUS: Record<AnalysisStatus, { label: string; className: string }> = {
   completed: { label: 'Completado', className: 'text-good' },
   failed: { label: 'Fallido', className: 'text-critical' },
@@ -130,9 +133,18 @@ export function AnalysisHistory({ runs, currentId }: { runs: AnalysisRun[]; curr
             )}
           </p>
           <p className="text-xs text-ink-2">
-            <span className={`font-semibold ${STATUS[r.status].className}`}>{STATUS[r.status].label}</span> · {r.reviewCount} reseñas ·{' '}
-            {describeProvider(r.provider).name}
+            <span className={`font-semibold ${STATUS[r.status].className}`}>
+              {r.status === 'pending' && r.attempts > 0 ? 'Reintentando' : STATUS[r.status].label}
+            </span>{' '}
+            · {r.reviewCount} reseñas · {describeProvider(r.provider).name}
+            {r.attempts > 1 && ` · ${r.attempts} intentos`}
           </p>
+          {r.usage?.calls > 0 && (
+            <p className="text-xs text-ink-3">
+              {r.usage.calls} {r.usage.calls === 1 ? 'llamada' : 'llamadas'} a la IA ·{' '}
+              {formatTokens(r.usage.inputTokens + r.usage.outputTokens)} tokens
+            </p>
+          )}
           {r.error && <p className="mt-0.5 text-xs text-critical">{r.error}</p>}
         </li>
       ))}
