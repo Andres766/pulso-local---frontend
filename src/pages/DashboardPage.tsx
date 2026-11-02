@@ -4,6 +4,7 @@ import { ApiError } from '../api/http';
 import { describeProvider, providerLabel } from '../api/providers';
 import { api } from '../api/services';
 import type { AnalysisRun, Dashboard } from '../api/types';
+import { BusinessSettings } from '../components/BusinessSettings';
 import { SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
 import { ImportPanel } from '../components/ImportPanel';
@@ -43,6 +44,7 @@ export function DashboardPage() {
   const [topicFilter, setTopicFilter] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -136,6 +138,9 @@ export function DashboardPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
+          <Button variant="ghost" icon="tag" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
+            Editar
+          </Button>
           <Button variant="secondary" icon="download" onClick={exportCsv} loading={exporting} disabled={dashboard.reviewCount === 0}>
             CSV
           </Button>
@@ -147,6 +152,14 @@ export function DashboardPage() {
           </Button>
         </div>
       </header>
+
+      {editing && (
+        <BusinessSettings
+          business={business}
+          onSaved={(updated) => setDashboard((d) => (d ? { ...d, business: updated } : d))}
+          onClose={() => setEditing(false)}
+        />
+      )}
 
       {error && <Alert>{error}</Alert>}
       {running && (

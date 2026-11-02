@@ -27,6 +27,9 @@ export class BusinessService {
   create(input: { name: string; category: BusinessCategory; city?: string }) {
     return this.client.post<Business>('/businesses', input);
   }
+  update(id: string, changes: { name?: string; category?: BusinessCategory; city?: string | null }) {
+    return this.client.patch<Business>(`/businesses/${encodeURIComponent(id)}`, changes);
+  }
   remove(id: string) {
     return this.client.delete<void>(`/businesses/${encodeURIComponent(id)}`);
   }
