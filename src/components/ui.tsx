@@ -74,7 +74,12 @@ export function Card({
 const inputClass =
   'w-full rounded-xl border border-line bg-card px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-3 transition-colors focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15';
 
-export function Field({ label, error, hint, ...rest }: InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string; hint?: string }) {
+export function Field({
+  label,
+  error,
+  hint,
+  ...rest
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string; hint?: string }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-ink">{label}</span>
@@ -123,7 +128,9 @@ export function Chip({ icon, children, tone = 'neutral' }: { icon?: IconName; ch
 }
 
 export function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
-  return <span aria-hidden className={`inline-block animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />;
+  return (
+    <span aria-hidden className={`inline-block animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} />
+  );
 }
 
 /** Bloque de carga con la forma del contenido (mejor percepción que un spinner suelto). */
@@ -153,7 +160,9 @@ export function EmptyState({ icon, title, children }: { icon: IconName; title: s
 
 export function Logo({ className = '', inverted = false }: { className?: string; inverted?: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-2.5 font-display text-[17px] font-extrabold tracking-tight ${inverted ? 'text-white' : 'text-ink'} ${className}`}>
+    <span
+      className={`inline-flex items-center gap-2.5 font-display text-[17px] font-extrabold tracking-tight ${inverted ? 'text-white' : 'text-ink'} ${className}`}
+    >
       <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden>
         <rect width="32" height="32" rx="9" fill={inverted ? 'rgb(255 255 255 / 0.16)' : '#1c5cab'} />
         <path d="M5 17h6l3-7 4 13 3-6h6" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />

@@ -6,20 +6,20 @@ import { api } from '../api/services';
 import type { AnalysisRun, Dashboard } from '../api/types';
 import { SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
-import { Icon } from '../components/icons';
 import { ImportPanel } from '../components/ImportPanel';
+import { Icon } from '../components/icons';
 import { KpiTiles, RecommendationList, TopicQuotes } from '../components/insights';
 import { ReviewsTable } from '../components/ReviewsTable';
 import { Alert, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '../components/ui';
-import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
 import { printReport, saveBlob } from '../hooks/exporting';
+import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
 import { categoryLabel } from './BusinessesPage';
 
 export const formatDate = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Cargando dashboard">
+    <div className="space-y-6" role="status" aria-label="Cargando dashboard">
       <Skeleton className="h-24" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
@@ -144,8 +144,8 @@ export function DashboardPage() {
       {running && (
         <Alert tone="info">
           <span className="inline-flex items-center gap-2">
-            <Spinner className="h-4 w-4" /> La IA está leyendo {running.reviewCount} reseñas: detecta temas, clasifica el sentimiento y redacta
-            recomendaciones…
+            <Spinner className="h-4 w-4" /> La IA está leyendo {running.reviewCount} reseñas: detecta temas, clasifica el sentimiento y
+            redacta recomendaciones…
           </span>
         </Alert>
       )}
@@ -212,8 +212,8 @@ export function DashboardPage() {
                 <TopicEvolution comparison={comparison} />
               ) : (
                 <p className="text-sm text-ink-2">
-                  Carga las reseñas nuevas de las próximas semanas y vuelve a analizar: aquí verás si las quejas bajan o suben
-                  después de aplicar las recomendaciones.
+                  Carga las reseñas nuevas de las próximas semanas y vuelve a analizar: aquí verás si las quejas bajan o suben después de
+                  aplicar las recomendaciones.
                 </p>
               )}
             </Card>
@@ -252,7 +252,12 @@ export function DashboardPage() {
             refreshKey={refreshKey}
           />
         </Card>
-        <Card title="Cargar reseñas" icon="upload" subtitle="De Google Maps, Instagram, WhatsApp o tu buzón de sugerencias" className="h-fit lg:col-span-2">
+        <Card
+          title="Cargar reseñas"
+          icon="upload"
+          subtitle="De Google Maps, Instagram, WhatsApp o tu buzón de sugerencias"
+          className="h-fit lg:col-span-2"
+        >
           <ImportPanel businessId={business.id} onImported={() => void load()} />
         </Card>
       </div>

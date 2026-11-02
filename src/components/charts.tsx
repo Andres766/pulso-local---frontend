@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import type { InsightReport, SentimentLabel, TopicStat } from '../api/types';
 
 /**
@@ -18,7 +18,11 @@ const pct = (part: number, total: number) => (total === 0 ? 0 : Math.round((part
 
 // ---- Tooltip compartido -------------------------------------------------------------
 
-interface TipState { x: number; y: number; content: ReactNode }
+interface TipState {
+  x: number;
+  y: number;
+  content: ReactNode;
+}
 
 function useTooltip() {
   const [tip, setTip] = useState<TipState | null>(null);
@@ -65,12 +69,19 @@ export function SentimentBar({ sentiment }: { sentiment: InsightReport['stats'][
 
   return (
     <div>
-      <div className="flex h-5 w-full gap-[2px]" role="img" aria-label={segments.map((x) => `${SENTIMENT_META[x.s].plural} ${x.share}%`).join(', ')}>
+      <div
+        className="flex h-5 w-full gap-[2px]"
+        role="img"
+        aria-label={segments.map((x) => `${SENTIMENT_META[x.s].plural} ${x.share}%`).join(', ')}
+      >
         {segments.map((x, i) => (
           <div
             key={x.s}
-            tabIndex={0}
-            {...bind(<><strong>{SENTIMENT_META[x.s].plural}</strong>: {x.count} reseñas ({x.share}%)</>)}
+            {...bind(
+              <>
+                <strong>{SENTIMENT_META[x.s].plural}</strong>: {x.count} reseñas ({x.share}%)
+              </>,
+            )}
             className={`${SENTIMENT_META[x.s].swatch} h-full outline-offset-1 ${i === 0 ? 'rounded-l' : ''} ${i === segments.length - 1 ? 'rounded-r' : ''}`}
             style={{ width: `${x.share}%` }}
           />
@@ -96,7 +107,15 @@ export function SentimentBar({ sentiment }: { sentiment: InsightReport['stats'][
 
 // ---- Temas recurrentes (barras horizontales apiladas por sentimiento) ----------------
 
-export function TopicChart({ topics, selected, onSelect }: { topics: TopicStat[]; selected: string | null; onSelect: (key: string | null) => void }) {
+export function TopicChart({
+  topics,
+  selected,
+  onSelect,
+}: {
+  topics: TopicStat[];
+  selected: string | null;
+  onSelect: (key: string | null) => void;
+}) {
   const { bind, node } = useTooltip();
   const max = Math.max(1, ...topics.map((t) => t.mentions));
 
@@ -115,9 +134,12 @@ export function TopicChart({ topics, selected, onSelect }: { topics: TopicStat[]
                 className={`group w-full rounded-lg p-2 text-left transition-colors ${isSelected ? 'bg-brand-soft' : 'hover:bg-raised'}`}
               >
                 <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                  <span className="font-medium text-ink" title={t.description}>{t.name}</span>
+                  <span className="font-medium text-ink" title={t.description}>
+                    {t.name}
+                  </span>
                   <span className="shrink-0 tabular-nums text-ink-2">
-                    {t.mentions} menciones · <span className={t.complaintShare > 0 ? 'font-semibold text-ink' : ''}>{t.complaintShare}% quejas</span>
+                    {t.mentions} menciones ·{' '}
+                    <span className={t.complaintShare > 0 ? 'font-semibold text-ink' : ''}>{t.complaintShare}% quejas</span>
                   </span>
                 </div>
                 <div className="flex h-2.5 gap-[2px]" style={{ width: `${(t.mentions / max) * 100}%` }}>

@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { type ChangeEvent, type FormEvent, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../api/http';
 import { useAuth } from '../auth/AuthContext';
@@ -25,7 +25,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
   // Solo se redirige a rutas internas (evita open redirect con un state manipulado).
   const from = (location.state as { from?: string } | null)?.from;
-  const target = from && from.startsWith('/') && !from.startsWith('//') ? from : '/';
+  const target = from?.startsWith('/') && !from.startsWith('//') ? from : '/';
   if (user) return <Navigate to={target} replace />;
 
   const isRegister = mode === 'register';
@@ -85,7 +85,9 @@ export function AuthPage({ mode }: { mode: Mode }) {
               <Icon name="sparkles" className="h-3.5 w-3.5" /> Ejemplo de recomendación
             </p>
             <p className="mt-2 font-semibold">Reduce la espera en horas pico</p>
-            <p className="mt-1 text-sm text-white/80">El 25% de tus reseñas se queja del tiempo de espera. Refuerza el turno de 12 a 2 p. m.</p>
+            <p className="mt-1 text-sm text-white/80">
+              El 25% de tus reseñas se queja del tiempo de espera. Refuerza el turno de 12 a 2 p. m.
+            </p>
           </div>
         </div>
 
@@ -113,7 +115,15 @@ export function AuthPage({ mode }: { mode: Mode }) {
             {error && <Alert>{error}</Alert>}
 
             {isRegister && (
-              <Field label="Nombre" autoComplete="name" required maxLength={80} value={form.name} onChange={set('name')} error={fieldErrors.name} />
+              <Field
+                label="Nombre"
+                autoComplete="name"
+                required
+                maxLength={80}
+                value={form.name}
+                onChange={set('name')}
+                error={fieldErrors.name}
+              />
             )}
             <Field
               label="Correo"

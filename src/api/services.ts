@@ -1,33 +1,38 @@
-import { http, type HttpClient } from './http';
-import type {
-  AnalysisRun,
-  Business,
-  BusinessCategory,
-  Dashboard,
-  ImportSummary,
-  ReviewItem,
-  SentimentLabel,
-  User,
-} from './types';
+import { type HttpClient, http } from './http';
+import type { AnalysisRun, Business, BusinessCategory, Dashboard, ImportSummary, ReviewItem, SentimentLabel, User } from './types';
 
 /** Servicios por recurso: los componentes llaman métodos con nombre, no URLs. */
 
 export class AuthService {
   constructor(private readonly client: HttpClient) {}
-  me() { return this.client.get<{ user: User }>('/auth/me').then((r) => r.user); }
-  login(email: string, password: string) { return this.client.post<{ user: User }>('/auth/login', { email, password }).then((r) => r.user); }
+  me() {
+    return this.client.get<{ user: User }>('/auth/me').then((r) => r.user);
+  }
+  login(email: string, password: string) {
+    return this.client.post<{ user: User }>('/auth/login', { email, password }).then((r) => r.user);
+  }
   register(name: string, email: string, password: string) {
     return this.client.post<{ user: User }>('/auth/register', { name, email, password }).then((r) => r.user);
   }
-  logout() { return this.client.post<void>('/auth/logout'); }
+  logout() {
+    return this.client.post<void>('/auth/logout');
+  }
 }
 
 export class BusinessService {
   constructor(private readonly client: HttpClient) {}
-  list() { return this.client.get<{ items: Business[] }>('/businesses').then((r) => r.items); }
-  create(input: { name: string; category: BusinessCategory; city?: string }) { return this.client.post<Business>('/businesses', input); }
-  remove(id: string) { return this.client.delete<void>(`/businesses/${encodeURIComponent(id)}`); }
-  dashboard(id: string) { return this.client.get<Dashboard>(`/businesses/${encodeURIComponent(id)}/dashboard`); }
+  list() {
+    return this.client.get<{ items: Business[] }>('/businesses').then((r) => r.items);
+  }
+  create(input: { name: string; category: BusinessCategory; city?: string }) {
+    return this.client.post<Business>('/businesses', input);
+  }
+  remove(id: string) {
+    return this.client.delete<void>(`/businesses/${encodeURIComponent(id)}`);
+  }
+  dashboard(id: string) {
+    return this.client.get<Dashboard>(`/businesses/${encodeURIComponent(id)}/dashboard`);
+  }
 }
 
 export interface ReviewQuery {
@@ -54,13 +59,19 @@ export class ReviewService {
   exportCsv(businessId: string) {
     return this.client.download(`/businesses/${encodeURIComponent(businessId)}/reviews/export`);
   }
-  clear(businessId: string) { return this.client.delete<{ deleted: number }>(`/businesses/${encodeURIComponent(businessId)}/reviews`); }
+  clear(businessId: string) {
+    return this.client.delete<{ deleted: number }>(`/businesses/${encodeURIComponent(businessId)}/reviews`);
+  }
 }
 
 export class AnalysisService {
   constructor(private readonly client: HttpClient) {}
-  start(businessId: string) { return this.client.post<AnalysisRun>(`/businesses/${encodeURIComponent(businessId)}/analyses`); }
-  get(runId: string) { return this.client.get<AnalysisRun>(`/analyses/${encodeURIComponent(runId)}`); }
+  start(businessId: string) {
+    return this.client.post<AnalysisRun>(`/businesses/${encodeURIComponent(businessId)}/analyses`);
+  }
+  get(runId: string) {
+    return this.client.get<AnalysisRun>(`/analyses/${encodeURIComponent(runId)}`);
+  }
 }
 
 export const api = {

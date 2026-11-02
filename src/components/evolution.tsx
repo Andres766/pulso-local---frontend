@@ -8,7 +8,17 @@ const fmt = (n: number) => n.toLocaleString('es-CO', { maximumFractionDigits: 1 
  * Variación en puntos porcentuales. `goodWhen` indica qué dirección es buena:
  * más positivas es bueno, más negativas es malo. Lleva flecha y texto: no depende solo del color.
  */
-export function Delta({ value, goodWhen, unit = 'pts', label = 'vs. análisis anterior' }: { value: number; goodWhen: 'up' | 'down'; unit?: string; label?: string }) {
+export function Delta({
+  value,
+  goodWhen,
+  unit = 'pts',
+  label = 'vs. análisis anterior',
+}: {
+  value: number;
+  goodWhen: 'up' | 'down';
+  unit?: string;
+  label?: string;
+}) {
   if (Math.abs(value) < 0.05) {
     return <span className="text-xs text-ink-3">Sin cambios {label}</span>;
   }
@@ -44,10 +54,18 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
         <caption className="sr-only">Quejas por tema: análisis anterior frente al actual</caption>
         <thead>
           <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-3">
-            <th scope="col" className="py-2 pr-3 font-semibold">Tema</th>
-            <th scope="col" className="py-2 pr-3 text-right font-semibold">Antes</th>
-            <th scope="col" className="py-2 pr-3 text-right font-semibold">Ahora</th>
-            <th scope="col" className="py-2 text-right font-semibold">Tendencia</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">
+              Tema
+            </th>
+            <th scope="col" className="py-2 pr-3 text-right font-semibold">
+              Antes
+            </th>
+            <th scope="col" className="py-2 pr-3 text-right font-semibold">
+              Ahora
+            </th>
+            <th scope="col" className="py-2 text-right font-semibold">
+              Tendencia
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -55,8 +73,12 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
             const trend = TREND[t.trend];
             return (
               <tr key={t.key}>
-                <th scope="row" className="py-2.5 pr-3 text-left font-medium text-ink">{t.name}</th>
-                <td className="py-2.5 pr-3 text-right tabular-nums text-ink-2">{t.previousComplaintShare === null ? '—' : `${fmt(t.previousComplaintShare)}%`}</td>
+                <th scope="row" className="py-2.5 pr-3 text-left font-medium text-ink">
+                  {t.name}
+                </th>
+                <td className="py-2.5 pr-3 text-right tabular-nums text-ink-2">
+                  {t.previousComplaintShare === null ? '—' : `${fmt(t.previousComplaintShare)}%`}
+                </td>
                 <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-ink">{fmt(t.complaintShare)}%</td>
                 <td className="py-2.5 text-right">
                   <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${trend.className}`}>
@@ -76,7 +98,9 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
           })}
         </tbody>
       </table>
-      <p className="mt-3 text-xs text-ink-3">Porcentaje de reseñas que se quejan de cada tema. Cambios menores a 2 puntos se consideran estables.</p>
+      <p className="mt-3 text-xs text-ink-3">
+        Porcentaje de reseñas que se quejan de cada tema. Cambios menores a 2 puntos se consideran estables.
+      </p>
     </div>
   );
 }
@@ -101,7 +125,9 @@ export function AnalysisHistory({ runs, currentId }: { runs: AnalysisRun[]; curr
           />
           <p className="text-sm font-medium text-ink">
             {new Date(r.createdAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
-            {r.id === currentId && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand">Actual</span>}
+            {r.id === currentId && (
+              <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand">Actual</span>
+            )}
           </p>
           <p className="text-xs text-ink-2">
             <span className={`font-semibold ${STATUS[r.status].className}`}>{STATUS[r.status].label}</span> · {r.reviewCount} reseñas ·{' '}

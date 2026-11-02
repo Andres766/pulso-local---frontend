@@ -47,8 +47,12 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
   return (
     <div className="space-y-3">
       <div className="inline-flex rounded-lg bg-raised p-1" role="tablist">
-        <button role="tab" aria-selected={tab === 'csv'} className={tabClass(tab === 'csv')} onClick={() => setTab('csv')}>Archivo CSV</button>
-        <button role="tab" aria-selected={tab === 'text'} className={tabClass(tab === 'text')} onClick={() => setTab('text')}>Pegar texto</button>
+        <button type="button" role="tab" aria-selected={tab === 'csv'} className={tabClass(tab === 'csv')} onClick={() => setTab('csv')}>
+          Archivo CSV
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'text'} className={tabClass(tab === 'text')} onClick={() => setTab('text')}>
+          Pegar texto
+        </button>
       </div>
 
       {tab === 'csv' ? (
@@ -61,7 +65,8 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
             className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand"
           />
           <p className="text-xs text-ink-3">
-            Columnas reconocidas: <code>comentario</code> (o texto, reseña), <code>calificacion</code> (1–5) y <code>fecha</code>. Separador coma o punto y coma. Máx. 1 MB.
+            Columnas reconocidas: <code>comentario</code> (o texto, reseña), <code>calificacion</code> (1–5) y <code>fecha</code>. Separador
+            coma o punto y coma. Máx. 1 MB.
           </p>
         </div>
       ) : (
@@ -75,7 +80,9 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
         />
       )}
 
-      <Button onClick={submit} loading={busy}>Importar reseñas</Button>
+      <Button onClick={submit} loading={busy}>
+        Importar reseñas
+      </Button>
 
       {error && <Alert>{error}</Alert>}
       {summary && (
@@ -85,7 +92,9 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
           {summary.rejected.length > 0 && (
             <ul className="mt-1 list-disc pl-4 text-xs text-ink-2">
               {summary.rejected.slice(0, 5).map((r) => (
-                <li key={r.row}>Fila {r.row}: {r.reason}</li>
+                <li key={r.row}>
+                  Fila {r.row}: {r.reason}
+                </li>
               ))}
             </ul>
           )}

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { ApiError } from '../api/http';
 import { api } from '../api/services';
@@ -11,18 +11,25 @@ export const categoryLabel = (c: BusinessCategory) => BUSINESS_CATEGORIES.find((
 export function BusinessesPage() {
   const [items, setItems] = useState<Business[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<{ name: string; category: BusinessCategory; city: string }>({ name: '', category: 'restaurante', city: '' });
+  const [form, setForm] = useState<{ name: string; category: BusinessCategory; city: string }>({
+    name: '',
+    category: 'restaurante',
+    city: '',
+  });
   const [saving, setSaving] = useState(false);
 
-  const load = () =>
-    api.businesses
-      .list()
-      .then(setItems)
-      .catch((e) => setError(e instanceof ApiError ? e.message : 'Error al cargar'));
+  const load = useCallback(
+    () =>
+      api.businesses
+        .list()
+        .then(setItems)
+        .catch((e) => setError(e instanceof ApiError ? e.message : 'Error al cargar')),
+    [],
+  );
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   async function onCreate(e: FormEvent) {
     e.preventDefault();
@@ -72,7 +79,10 @@ export function BusinessesPage() {
                       <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-soft font-display text-lg font-extrabold text-brand">
                         {b.name.charAt(0).toUpperCase()}
                       </span>
-                      <Icon name="chevronRight" className="h-5 w-5 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-brand" />
+                      <Icon
+                        name="chevronRight"
+                        className="h-5 w-5 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-brand"
+                      />
                     </div>
                     <p className="mt-4 font-display text-lg font-bold text-ink">{b.name}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -89,15 +99,33 @@ export function BusinessesPage() {
 
         <Card title="Nuevo negocio" icon="plus" className="h-fit">
           <form onSubmit={onCreate} className="space-y-4">
-            <Field label="Nombre" required minLength={2} maxLength={120} placeholder="Ej. Café Galeras" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Select label="Categoría" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as BusinessCategory })}>
+            <Field
+              label="Nombre"
+              required
+              minLength={2}
+              maxLength={120}
+              placeholder="Ej. Café Galeras"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <Select
+              label="Categoría"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value as BusinessCategory })}
+            >
               {BUSINESS_CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
               ))}
             </Select>
-            <Field label="Ciudad (opcional)" maxLength={80} placeholder="Ej. Pasto" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+            <Field
+              label="Ciudad (opcional)"
+              maxLength={80}
+              placeholder="Ej. Pasto"
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            />
             <Button type="submit" loading={saving} icon="plus" className="w-full">
               Crear negocio
             </Button>

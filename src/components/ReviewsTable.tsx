@@ -26,12 +26,21 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
 
   // Debounce de la búsqueda para no disparar una petición por cada tecla.
   useEffect(() => {
-    const t = setTimeout(() => setQuery(search.trim()), 350);
+    const t = setTimeout(() => {
+      setQuery(search.trim());
+      setOffset(0);
+    }, 350);
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => setOffset(0), [sentiment, query, topicFilter]);
+  // Si cambia el tema desde fuera (clic en el gráfico), se vuelve a la primera página.
+  const [lastTopic, setLastTopic] = useState(topicFilter);
+  if (lastTopic !== topicFilter) {
+    setLastTopic(topicFilter);
+    setOffset(0);
+  }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey es un disparador: el padre lo cambia para recargar tras importar
   useEffect(() => {
     let cancelled = false;
     setError(null);
@@ -44,7 +53,8 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
     };
   }, [businessId, sentiment, topicFilter, query, offset, refreshKey]);
 
-  const selectClass = 'rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15';
+  const selectClass =
+    'rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15';
 
   return (
     <div className="space-y-3">
@@ -58,23 +68,42 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           aria-label="Buscar en las reseñas"
           className={`${selectClass} min-w-48 flex-1`}
         />
-        <select aria-label="Filtrar por sentimiento" value={sentiment} onChange={(e) => setSentiment(e.target.value as SentimentLabel | '')} className={selectClass}>
+        <select
+          aria-label="Filtrar por sentimiento"
+          value={sentiment}
+          onChange={(e) => {
+            setSentiment(e.target.value as SentimentLabel | '');
+            setOffset(0);
+          }}
+          className={selectClass}
+        >
           <option value="">Todo sentimiento</option>
           {(Object.keys(SENTIMENT_META) as SentimentLabel[]).map((s) => (
-            <option key={s} value={s}>{SENTIMENT_META[s].plural}</option>
+            <option key={s} value={s}>
+              {SENTIMENT_META[s].plural}
+            </option>
           ))}
         </select>
-        <select aria-label="Filtrar por tema" value={topicFilter ?? ''} onChange={(e) => onTopicFilter(e.target.value || null)} className={selectClass}>
+        <select
+          aria-label="Filtrar por tema"
+          value={topicFilter ?? ''}
+          onChange={(e) => onTopicFilter(e.target.value || null)}
+          className={selectClass}
+        >
           <option value="">Todos los temas</option>
           {topics.map((t) => (
-            <option key={t.key} value={t.key}>{t.name}</option>
+            <option key={t.key} value={t.key}>
+              {t.name}
+            </option>
           ))}
         </select>
       </div>
 
       {error && <Alert>{error}</Alert>}
       {!data ? (
-        <div className="py-8 text-center text-brand"><Spinner /></div>
+        <div className="py-8 text-center text-brand">
+          <Spinner />
+        </div>
       ) : data.items.length === 0 ? (
         <p className="py-6 text-center text-sm text-ink-2">No hay reseñas con estos filtros.</p>
       ) : (
@@ -91,9 +120,16 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
                 ) : (
                   <span className="text-ink-3">Sin analizar</span>
                 )}
-                {r.rating && <span aria-label={`${r.rating} de 5 estrellas`}>{'★'.repeat(r.rating)}<span className="text-line">{'★'.repeat(5 - r.rating)}</span></span>}
+                {r.rating && (
+                  <span role="img" aria-label={`${r.rating} de 5 estrellas`}>
+                    {'★'.repeat(r.rating)}
+                    <span className="text-line">{'★'.repeat(5 - r.rating)}</span>
+                  </span>
+                )}
                 {r.topics.map((t) => (
-                  <span key={t} className="rounded-full bg-raised px-2 py-0.5">{t}</span>
+                  <span key={t} className="rounded-full bg-raised px-2 py-0.5">
+                    {t}
+                  </span>
                 ))}
                 <span className="text-ink-3">{new Date(r.authoredAt ?? r.createdAt).toLocaleDateString('es-CO')}</span>
               </div>
@@ -104,10 +140,16 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
 
       {data && data.total > PAGE && (
         <div className="flex items-center justify-between text-sm text-ink-2">
-          <span className="tabular-nums">{offset + 1}–{Math.min(offset + PAGE, data.total)} de {data.total}</span>
+          <span className="tabular-nums">
+            {offset + 1}–{Math.min(offset + PAGE, data.total)} de {data.total}
+          </span>
           <div className="flex gap-2">
-            <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(offset - PAGE)}>Anterior</Button>
-            <Button variant="secondary" disabled={offset + PAGE >= data.total} onClick={() => setOffset(offset + PAGE)}>Siguiente</Button>
+            <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(offset - PAGE)}>
+              Anterior
+            </Button>
+            <Button variant="secondary" disabled={offset + PAGE >= data.total} onClick={() => setOffset(offset + PAGE)}>
+              Siguiente
+            </Button>
           </div>
         </div>
       )}

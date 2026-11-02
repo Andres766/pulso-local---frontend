@@ -18,16 +18,43 @@ interface Tile {
   extra?: ReactNode;
 }
 
-export function KpiTiles({ report, extras = {} }: { report: InsightReport; extras?: Partial<Record<'total' | 'positive' | 'negative' | 'complaint', ReactNode>> }) {
+export function KpiTiles({
+  report,
+  extras = {},
+}: {
+  report: InsightReport;
+  extras?: Partial<Record<'total' | 'positive' | 'negative' | 'complaint', ReactNode>>;
+}) {
   const { sentiment, totalReviews, topics } = report.stats;
   const share = (n: number) => (totalReviews === 0 ? 0 : Math.round((n / totalReviews) * 100));
   const topComplaint = [...topics].sort((a, b) => b.complaintShare - a.complaintShare)[0];
   const hasComplaint = Boolean(topComplaint && topComplaint.complaintShare > 0);
 
   const tiles: (Tile & { key: keyof typeof extras })[] = [
-    { key: 'total', label: 'Reseñas analizadas', value: totalReviews.toString(), note: `${topics.length} temas detectados`, icon: 'message', iconClass: 'bg-brand-soft text-brand' },
-    { key: 'positive', label: 'Clientes satisfechos', value: `${share(sentiment.positive)}%`, note: `${sentiment.positive} reseñas positivas`, icon: 'smile', iconClass: 'bg-brand-soft text-pos' },
-    { key: 'negative', label: 'Clientes insatisfechos', value: `${share(sentiment.negative)}%`, note: `${sentiment.negative} reseñas negativas`, icon: 'frown', iconClass: 'bg-critical-soft text-neg' },
+    {
+      key: 'total',
+      label: 'Reseñas analizadas',
+      value: totalReviews.toString(),
+      note: `${topics.length} temas detectados`,
+      icon: 'message',
+      iconClass: 'bg-brand-soft text-brand',
+    },
+    {
+      key: 'positive',
+      label: 'Clientes satisfechos',
+      value: `${share(sentiment.positive)}%`,
+      note: `${sentiment.positive} reseñas positivas`,
+      icon: 'smile',
+      iconClass: 'bg-brand-soft text-pos',
+    },
+    {
+      key: 'negative',
+      label: 'Clientes insatisfechos',
+      value: `${share(sentiment.negative)}%`,
+      note: `${sentiment.negative} reseñas negativas`,
+      icon: 'frown',
+      iconClass: 'bg-critical-soft text-neg',
+    },
     {
       key: 'complaint',
       label: 'Principal queja',
@@ -49,7 +76,9 @@ export function KpiTiles({ report, extras = {} }: { report: InsightReport; extra
               <Icon name={t.icon} />
             </span>
           </div>
-          <p className={`mt-2 font-display font-extrabold tabular-nums text-ink ${t.small ? 'text-lg leading-7' : 'text-3xl'}`}>{t.value}</p>
+          <p className={`mt-2 font-display font-extrabold tabular-nums text-ink ${t.small ? 'text-lg leading-7' : 'text-3xl'}`}>
+            {t.value}
+          </p>
           <p className="mt-1 text-xs text-ink-2">{t.note}</p>
           {extras[t.key] && <div className="mt-2">{extras[t.key]}</div>}
         </div>

@@ -30,7 +30,9 @@ export class HttpClient {
   get<T>(path: string, query?: Record<string, string | number | undefined>): Promise<T> {
     const qs = query
       ? new URLSearchParams(
-          Object.entries(query).filter((e): e is [string, string | number] => e[1] !== undefined && e[1] !== '').map(([k, v]) => [k, String(v)]),
+          Object.entries(query)
+            .filter((e): e is [string, string | number] => e[1] !== undefined && e[1] !== '')
+            .map(([k, v]) => [k, String(v)]),
         ).toString()
       : '';
     return this.request<T>('GET', qs ? `${path}?${qs}` : path);

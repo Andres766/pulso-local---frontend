@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AuthProvider, RequireAuth } from './auth/AuthContext';
 import { Layout } from './components/Layout';
+import { applyTheme } from './hooks/useTheme';
 import { AuthPage } from './pages/AuthPage';
 import { BusinessesPage } from './pages/BusinessesPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { applyTheme } from './hooks/useTheme';
 import './index.css';
 
 // Se aplica el tema guardado antes del primer render para evitar un destello del tema equivocado.
