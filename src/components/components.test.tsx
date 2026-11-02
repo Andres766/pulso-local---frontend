@@ -1,9 +1,10 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { describeProvider, providerLabel } from '../api/providers';
 import { Delta, TopicEvolution } from './evolution';
 import { ThemeToggle } from './ThemeToggle';
+import { ToastProvider, useToast } from './toast';
 
 describe('describeProvider', () => {
   it('reconoce los modelos de lenguaje y el motor local', () => {
@@ -63,5 +64,40 @@ describe('ThemeToggle', () => {
 
     await userEvent.click(within(group).getByRole('radio', { name: 'Tema claro' }));
     expect(document.documentElement.dataset.theme).toBe('light');
+  });
+});
+
+/** Botones que disparan notificaciones (a nivel de módulo, como exige React). */
+function Trigger() {
+  const toast = useToast();
+  return (
+    <>
+      <button type="button" onClick={() => toast.success('Guardado')}>
+        ok
+      </button>
+      <button type="button" onClick={() => toast.error('Falló')}>
+        error
+      </button>
+    </>
+  );
+}
+
+describe('Notificaciones', () => {
+  it('se anuncian (status o alert), no se acumulan más de 3 y se cierran solas', () => {
+    vi.useFakeTimers();
+    render(
+      <ToastProvider>
+        <Trigger />
+      </ToastProvider>,
+    );
+    for (let i = 0; i < 4; i++) fireEvent.click(screen.getByText('ok'));
+    fireEvent.click(screen.getByText('error'));
+
+    expect(screen.getAllByRole('status').filter((n) => n.textContent?.includes('Guardado'))).toHaveLength(2);
+    expect(screen.getByRole('alert')).toHaveTextContent('Falló');
+
+    act(() => vi.advanceTimersByTime(5000));
+    expect(screen.queryByText('Guardado')).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

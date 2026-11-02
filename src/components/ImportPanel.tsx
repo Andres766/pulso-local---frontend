@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import type { ImportSummary } from '../api/types';
+import { useToast } from './toast';
 import { Alert, Button } from './ui';
 
 const MAX_FILE_BYTES = 1024 * 1024;
@@ -14,6 +15,7 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
   const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const toast = useToast();
 
   async function submit() {
     setError(null);
@@ -33,6 +35,7 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
       setText('');
       setFile(null);
       if (fileInput.current) fileInput.current.value = '';
+      toast.success(`${result.imported} reseñas importadas.`);
       onImported();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo importar');

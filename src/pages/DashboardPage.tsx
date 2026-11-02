@@ -10,6 +10,7 @@ import { ImportPanel } from '../components/ImportPanel';
 import { Icon } from '../components/icons';
 import { KpiTiles, RecommendationList, TopicQuotes } from '../components/insights';
 import { ReviewsTable } from '../components/ReviewsTable';
+import { useToast } from '../components/toast';
 import { Alert, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '../components/ui';
 import { printReport, saveBlob } from '../hooks/exporting';
 import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
@@ -57,7 +58,12 @@ export function DashboardPage() {
   }, [load]);
 
   const running = dashboard?.latestRun && ['pending', 'running'].includes(dashboard.latestRun.status) ? dashboard.latestRun : null;
-  useAnalysisPolling(running, () => void load());
+  const toast = useToast();
+  useAnalysisPolling(running, (finished) => {
+    if (finished.status === 'completed') toast.success('Análisis completado: el reporte ya está actualizado.');
+    else toast.error('El análisis no se pudo completar.');
+    void load();
+  });
 
   async function startAnalysis() {
     setStarting(true);
@@ -65,6 +71,7 @@ export function DashboardPage() {
     try {
       const run: AnalysisRun = await api.analyses.start(id);
       setDashboard((d) => (d ? { ...d, latestRun: run } : d));
+      toast.info('Análisis en cola: te avisamos cuando termine.');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo iniciar el análisis');
     } finally {
@@ -78,8 +85,9 @@ export function DashboardPage() {
     try {
       const { blob, filename } = await api.reviews.exportCsv(id);
       saveBlob(blob, filename ?? 'resenas.csv');
+      toast.success('CSV descargado.');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo exportar');
+      toast.error(err instanceof ApiError ? err.message : 'No se pudo exportar');
     } finally {
       setExporting(false);
     }
