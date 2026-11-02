@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useConfirm } from '../components/confirm';
 import { useToast } from '../components/toast';
 import { Alert, Button, Card, Field } from '../components/ui';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const DELETE_WORD = 'ELIMINAR';
 
@@ -14,6 +15,7 @@ export function AccountPage() {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const toast = useToast();
+  usePageTitle('Mi cuenta');
 
   const [pwd, setPwd] = useState({ current: '', next: '', repeat: '' });
   const [pwdError, setPwdError] = useState<string | null>(null);

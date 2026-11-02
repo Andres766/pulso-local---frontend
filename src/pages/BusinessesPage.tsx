@@ -5,6 +5,7 @@ import { api } from '../api/services';
 import { BUSINESS_CATEGORIES, type Business, type BusinessCategory, categoryLabel } from '../api/types';
 import { Icon } from '../components/icons';
 import { Alert, Button, Card, Chip, EmptyState, Field, Select, Skeleton } from '../components/ui';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export function BusinessesPage() {
   const [items, setItems] = useState<Business[] | null>(null);
@@ -15,6 +16,7 @@ export function BusinessesPage() {
     city: '',
   });
   const [saving, setSaving] = useState(false);
+  usePageTitle('Mis negocios');
 
   const load = useCallback(
     () =>

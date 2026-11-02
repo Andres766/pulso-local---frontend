@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -19,10 +19,28 @@ export function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const main = useRef<HTMLElement>(null);
+  const previousPath = useRef(location.pathname);
+
+  // En una SPA el navegador no mueve el foco al cambiar de página: se lleva al contenido para que
+  // teclado y lector de pantalla empiecen por la página nueva. Se compara con la ruta anterior (y no
+  // con un "primer render") para que el doble efecto de StrictMode no mueva el foco al cargar.
+  useEffect(() => {
+    if (previousPath.current === location.pathname) return;
+    previousPath.current = location.pathname;
+    main.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0 });
+  }, [location.pathname]);
   const initial = user?.name.trim().charAt(0).toUpperCase() ?? '?';
 
   return (
     <div className="flex min-h-screen flex-col">
+      <a
+        href="#contenido"
+        className="sr-only z-50 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-on-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
+      >
+        Saltar al contenido
+      </a>
       <header className="sticky top-0 z-20 border-b border-line bg-card/85 backdrop-blur-md print:hidden">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link to="/" aria-label="Ir a mis negocios">
@@ -56,7 +74,7 @@ export function Layout() {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main id="contenido" ref={main} tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 outline-none">
         {/* Si una página falla, la cabecera sigue disponible; el límite se reinicia al cambiar de ruta. */}
         <ErrorBoundary resetKey={location.pathname}>
           {/* Mientras llega el código de la página, la cabecera sigue visible. */}

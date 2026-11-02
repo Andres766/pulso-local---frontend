@@ -16,6 +16,7 @@ import { useToast } from '../components/toast';
 import { Alert, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '../components/ui';
 import { printReport, saveBlob } from '../hooks/exporting';
 import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export const formatDate = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -45,6 +46,7 @@ export function DashboardPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [editing, setEditing] = useState(false);
+  usePageTitle(dashboard?.business.name ?? 'Dashboard');
 
   const load = useCallback(async () => {
     try {

@@ -1,8 +1,10 @@
 import { Link } from 'react-router';
 import { Logo } from '../components/ui';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 /** Ruta inexistente: se informa en lugar de redirigir en silencio al inicio. */
 export function NotFoundPage() {
+  usePageTitle('Página no encontrada');
   return (
     <main className="grid min-h-screen place-items-center p-6 text-center">
       <div>

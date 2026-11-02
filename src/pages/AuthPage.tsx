@@ -6,6 +6,7 @@ import { safeRedirect } from '../auth/safeRedirect';
 import { Icon, type IconName } from '../components/icons';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Alert, Button, Field, Logo } from '../components/ui';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 type Mode = 'login' | 'register';
 
@@ -23,6 +24,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  usePageTitle(mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión');
 
   // Solo se redirige a rutas internas (evita open redirect con un state manipulado).
   const target = safeRedirect((location.state as { from?: unknown } | null)?.from);
