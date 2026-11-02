@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { describeProvider, providerLabel } from '../api/providers';
 import { ConfirmProvider, useConfirm } from './confirm';
+import { buildCsvTemplate } from './csvTemplate';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Delta, TopicEvolution } from './evolution';
 import { ThemeToggle } from './ThemeToggle';
@@ -180,5 +181,16 @@ describe('ErrorBoundary', () => {
     );
     expect(screen.getByText('contenido sano')).toBeInTheDocument();
     spy.mockRestore();
+  });
+});
+
+describe('Plantilla CSV', () => {
+  it('trae BOM, separador ; y las columnas que reconoce el backend', async () => {
+    const blob = buildCsvTemplate();
+    // Blob.text() descarta el BOM al decodificar: se revisan los bytes crudos (EF BB BF).
+    expect([...new Uint8Array(await blob.arrayBuffer()).slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const [header, first] = (await blob.text()).split('\r\n');
+    expect(header).toBe('fecha;comentario;calificacion');
+    expect(first?.split(';')).toHaveLength(3);
   });
 });

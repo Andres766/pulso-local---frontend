@@ -2,6 +2,9 @@ import { useRef, useState } from 'react';
 import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import type { ImportSummary } from '../api/types';
+import { saveBlob } from '../hooks/exporting';
+import { buildCsvTemplate } from './csvTemplate';
+import { Icon } from './icons';
 import { useToast } from './toast';
 import { Alert, Button } from './ui';
 
@@ -71,6 +74,14 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
             Columnas reconocidas: <code>comentario</code> (o texto, reseña), <code>calificacion</code> (1–5) y <code>fecha</code>. Separador
             coma o punto y coma. Máx. 1 MB.
           </p>
+          <button
+            type="button"
+            onClick={() => saveBlob(buildCsvTemplate(), 'plantilla-resenas-pulsolocal.csv')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
+          >
+            <Icon name="download" className="h-3.5 w-3.5" />
+            Descargar plantilla CSV de ejemplo
+          </button>
         </div>
       ) : (
         <textarea
