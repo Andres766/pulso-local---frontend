@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../api/http';
 import { useAuth } from '../auth/AuthContext';
+import { safeRedirect } from '../auth/safeRedirect';
 import { Icon, type IconName } from '../components/icons';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Alert, Button, Field, Logo } from '../components/ui';
@@ -24,8 +25,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const [submitting, setSubmitting] = useState(false);
 
   // Solo se redirige a rutas internas (evita open redirect con un state manipulado).
-  const from = (location.state as { from?: string } | null)?.from;
-  const target = from?.startsWith('/') && !from.startsWith('//') ? from : '/';
+  const target = safeRedirect((location.state as { from?: unknown } | null)?.from);
   if (user) return <Navigate to={target} replace />;
 
   const isRegister = mode === 'register';

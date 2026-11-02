@@ -1,0 +1,67 @@
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it } from 'vitest';
+import { describeProvider, providerLabel } from '../api/providers';
+import { Delta, TopicEvolution } from './evolution';
+import { ThemeToggle } from './ThemeToggle';
+
+describe('describeProvider', () => {
+  it('reconoce los modelos de lenguaje y el motor local', () => {
+    expect(describeProvider('gemini:gemini-3.5-flash')).toEqual({ name: 'Gemini', model: 'gemini-3.5-flash', isLlm: true });
+    expect(describeProvider('claude:claude-opus-5')).toMatchObject({ name: 'Claude', isLlm: true });
+    expect(describeProvider('heuristico:lexico-es-v1')).toEqual({ name: 'Léxico local', model: null, isLlm: false });
+    expect(providerLabel('gemini:gemini-3.5-flash')).toBe('Gemini · gemini-3.5-flash');
+  });
+});
+
+describe('Delta', () => {
+  it('menos quejas se muestra como mejora (verde) y con flecha y signo, no solo con color', () => {
+    render(<Delta value={-3.2} goodWhen="down" />);
+    const delta = screen.getByText(/3,2 pts/);
+    expect(delta).toHaveTextContent('−3,2 pts');
+    expect(delta).toHaveClass('text-good');
+  });
+
+  it('más reseñas negativas es un empeoramiento (rojo) y un cambio mínimo se informa como "sin cambios"', () => {
+    const { rerender } = render(<Delta value={6.8} goodWhen="down" />);
+    expect(screen.getByText(/6,8 pts/)).toHaveClass('text-critical');
+    rerender(<Delta value={0.01} goodWhen="up" />);
+    expect(screen.getByText(/Sin cambios/)).toBeInTheDocument();
+  });
+});
+
+describe('TopicEvolution', () => {
+  it('lista primero lo que empeoró, porque es lo que hay que atender', () => {
+    render(
+      <TopicEvolution
+        comparison={{
+          previousTotalReviews: 40,
+          positiveShareDelta: 0,
+          negativeShareDelta: 0,
+          averageScoreDelta: 0,
+          topics: [
+            { key: 'precio', name: 'Precio', complaintShare: 5, previousComplaintShare: 10, complaintDelta: -5, trend: 'improved' },
+            { key: 'espera', name: 'Espera', complaintShare: 20, previousComplaintShare: 10, complaintDelta: 10, trend: 'worsened' },
+            { key: 'pagos', name: 'Pagos', complaintShare: 2, previousComplaintShare: null, complaintDelta: null, trend: 'new' },
+          ],
+        }}
+      />,
+    );
+    const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+    expect(rows.map((r) => within(r).getByRole('rowheader').textContent)).toEqual(['Espera', 'Pagos', 'Precio']);
+    expect(within(rows[0]!).getByText(/Empeoró/)).toBeInTheDocument();
+  });
+});
+
+describe('ThemeToggle', () => {
+  it('es un grupo de radios accesible y aplica el tema elegido al documento', async () => {
+    render(<ThemeToggle />);
+    const group = screen.getByRole('group', { name: 'Tema de la interfaz' });
+    await userEvent.click(within(group).getByRole('radio', { name: 'Tema oscuro' }));
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(within(group).getByRole('radio', { name: 'Tema oscuro' })).toBeChecked();
+
+    await userEvent.click(within(group).getByRole('radio', { name: 'Tema claro' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+  });
+});
