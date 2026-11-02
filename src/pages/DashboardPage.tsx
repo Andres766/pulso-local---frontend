@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { ApiError } from '../api/http';
+import { describeProvider, providerLabel } from '../api/providers';
 import { api } from '../api/services';
 import type { AnalysisRun, Dashboard } from '../api/types';
 import { SentimentBar, TopicChart } from '../components/charts';
@@ -14,7 +15,6 @@ import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
 import { printReport, saveBlob } from '../hooks/exporting';
 import { categoryLabel } from './BusinessesPage';
 
-export const providerLabel = (p: string) => (p.startsWith('claude:') ? `Claude · ${p.slice(7)}` : 'Analizador léxico local');
 export const formatDate = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
 function DashboardSkeleton() {
@@ -90,7 +90,7 @@ export function DashboardPage() {
 
   const { business, report, latestRun, reportRun } = dashboard;
   const selectedTopic = report?.stats.topics.find((t) => t.key === topicFilter) ?? null;
-  const usesLlm = reportRun?.provider.startsWith('claude:') ?? false;
+  const usesLlm = reportRun ? describeProvider(reportRun.provider).isLlm : false;
   const comparison = dashboard.comparison;
   const topComplaintKey = report ? [...report.stats.topics].sort((a, b) => b.complaintShare - a.complaintShare)[0]?.key : undefined;
   const topComplaintChange = comparison?.topics.find((t) => t.key === topComplaintKey);

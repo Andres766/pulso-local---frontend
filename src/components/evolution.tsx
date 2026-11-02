@@ -1,3 +1,4 @@
+import { describeProvider } from '../api/providers';
 import type { AnalysisRun, AnalysisStatus, InsightComparison, TopicTrend } from '../api/types';
 import { Icon, type IconName } from './icons';
 
@@ -104,7 +105,7 @@ export function AnalysisHistory({ runs, currentId }: { runs: AnalysisRun[]; curr
           </p>
           <p className="text-xs text-ink-2">
             <span className={`font-semibold ${STATUS[r.status].className}`}>{STATUS[r.status].label}</span> · {r.reviewCount} reseñas ·{' '}
-            {r.provider.startsWith('claude:') ? 'Claude' : 'Léxico local'}
+            {describeProvider(r.provider).name}
           </p>
           {r.error && <p className="mt-0.5 text-xs text-critical">{r.error}</p>}
         </li>
