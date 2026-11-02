@@ -4,6 +4,7 @@ import { ApiError } from '../api/http';
 import { useAuth } from '../auth/AuthContext';
 import { safeRedirect } from '../auth/safeRedirect';
 import { Icon, type IconName } from '../components/icons';
+import { PasswordChecklist } from '../components/PasswordChecklist';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Alert, Button, Field, Logo } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -147,8 +148,8 @@ export function AuthPage({ mode }: { mode: Mode }) {
               value={form.password}
               onChange={set('password')}
               error={fieldErrors.password}
-              hint={isRegister ? 'Mínimo 10 caracteres, con letras y números.' : undefined}
             />
+            {isRegister && <PasswordChecklist password={form.password} email={form.email} />}
             <Button type="submit" loading={submitting} className="w-full py-2.5">
               {isRegister ? 'Crear cuenta' : 'Entrar'}
             </Button>

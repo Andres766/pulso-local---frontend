@@ -4,6 +4,7 @@ import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import { useAuth } from '../auth/AuthContext';
 import { useConfirm } from '../components/confirm';
+import { PasswordChecklist } from '../components/PasswordChecklist';
 import { useToast } from '../components/toast';
 import { Alert, Button, Card, Field } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -92,7 +93,6 @@ export function AccountPage() {
               required
               minLength={10}
               maxLength={72}
-              hint="Mínimo 10 caracteres, con letras y números."
               value={pwd.next}
               onChange={(e) => setPwd({ ...pwd, next: e.target.value })}
             />
@@ -105,6 +105,7 @@ export function AccountPage() {
               onChange={(e) => setPwd({ ...pwd, repeat: e.target.value })}
             />
           </div>
+          <PasswordChecklist password={pwd.next} email={user?.email} />
           {pwdError && <Alert>{pwdError}</Alert>}
           <Button type="submit" loading={savingPwd} icon="check">
             Cambiar contraseña

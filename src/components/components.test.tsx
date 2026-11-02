@@ -7,6 +7,7 @@ import { ConfirmProvider, useConfirm } from './confirm';
 import { buildCsvTemplate } from './csvTemplate';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Delta, TopicEvolution } from './evolution';
+import { passwordChecks } from './PasswordChecklist';
 import { ThemeToggle } from './ThemeToggle';
 import { ToastProvider, useToast } from './toast';
 
@@ -192,5 +193,21 @@ describe('Plantilla CSV', () => {
     const [header, first] = (await blob.text()).split('\r\n');
     expect(header).toBe('fecha;comentario;calificacion');
     expect(first?.split(';')).toHaveLength(3);
+  });
+});
+
+describe('passwordChecks', () => {
+  const ok = (password: string, email?: string) => Object.fromEntries(passwordChecks(password, email).map((c) => [c.id, c.ok]));
+
+  it('replica las reglas del backend', () => {
+    expect(ok('corta1')).toMatchObject({ length: false, mix: true });
+    expect(ok('soloLetrasLargas')).toMatchObject({ length: true, mix: false });
+    expect(ok('ana2026cafeteria', 'ana@cafe.co')).toMatchObject({ email: false });
+    expect(ok('Galeras2026Pasto', 'ana@cafe.co')).toEqual({ length: true, mix: true, email: true, max: true });
+  });
+
+  it('mide el máximo en bytes, no en caracteres (las tildes ocupan 2 bytes)', () => {
+    expect(ok(`${'á'.repeat(36)}1`).max).toBe(false); // 37 caracteres pero 73 bytes
+    expect(ok(`${'a'.repeat(70)}12`).max).toBe(true);
   });
 });
