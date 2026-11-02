@@ -25,6 +25,12 @@ export class AuthService {
   register(name: string, email: string, password: string) {
     return this.client.post<{ user: User }>('/auth/register', { name, email, password }).then((r) => r.user);
   }
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.client.post<void>('/auth/password', { currentPassword, newPassword });
+  }
+  deleteAccount(password: string) {
+    return this.client.request<void>('DELETE', '/auth/account', { password });
+  }
   logout() {
     return this.client.post<void>('/auth/logout');
   }

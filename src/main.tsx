@@ -6,6 +6,7 @@ import { ConfirmProvider } from './components/confirm';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/toast';
 import { applyTheme } from './hooks/useTheme';
+import { AccountPage } from './pages/AccountPage';
 import { AuthPage } from './pages/AuthPage';
 import { BusinessesPage } from './pages/BusinessesPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -32,6 +33,7 @@ createRoot(document.getElementById('root')!).render(
               >
                 <Route index element={<BusinessesPage />} />
                 <Route path="/negocios/:id" element={<DashboardPage />} />
+                <Route path="/cuenta" element={<AccountPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

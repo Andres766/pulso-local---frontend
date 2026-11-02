@@ -66,7 +66,7 @@ export class HttpClient {
     return { blob: await response.blob(), filename: match?.[1] ?? null };
   }
 
-  private async request<T>(method: string, path: string, body?: Json | FormData): Promise<T> {
+  async request<T>(method: string, path: string, body?: Json | FormData): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json', ...HttpClient.CSRF_HEADER };
     let payload: BodyInit | undefined;
     if (body instanceof FormData) {

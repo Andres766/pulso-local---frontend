@@ -18,12 +18,17 @@ export function Layout() {
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <div className="hidden items-center gap-2 sm:flex">
+            <Link
+              to="/cuenta"
+              className="flex items-center gap-2 rounded-xl px-1.5 py-1 transition-colors hover:bg-raised"
+              title="Mi cuenta"
+              aria-label="Mi cuenta"
+            >
               <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-sm font-bold text-brand" aria-hidden>
                 {initial}
               </span>
-              <span className="text-sm font-medium text-ink">{user?.name}</span>
-            </div>
+              <span className="hidden text-sm font-medium text-ink sm:inline">{user?.name}</span>
+            </Link>
             <button
               type="button"
               onClick={async () => {
