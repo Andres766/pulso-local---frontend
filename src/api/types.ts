@@ -15,6 +15,8 @@ export const BUSINESS_CATEGORIES = [
 ] as const;
 export type BusinessCategory = (typeof BUSINESS_CATEGORIES)[number]['value'];
 
+export const categoryLabel = (c: BusinessCategory) => BUSINESS_CATEGORIES.find((x) => x.value === c)?.label ?? c;
+
 export interface User {
   id: string;
   email: string;

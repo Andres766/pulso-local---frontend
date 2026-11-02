@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router';
 import { ApiError } from '../api/http';
 import { describeProvider, providerLabel } from '../api/providers';
 import { api } from '../api/services';
-import type { AnalysisRun, Dashboard } from '../api/types';
+import { type AnalysisRun, categoryLabel, type Dashboard } from '../api/types';
 import { BusinessSettings } from '../components/BusinessSettings';
 import { Legend, SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
@@ -16,7 +16,6 @@ import { useToast } from '../components/toast';
 import { Alert, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '../components/ui';
 import { printReport, saveBlob } from '../hooks/exporting';
 import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
-import { categoryLabel } from './BusinessesPage';
 
 export const formatDate = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 

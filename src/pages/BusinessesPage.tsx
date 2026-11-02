@@ -2,11 +2,9 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { ApiError } from '../api/http';
 import { api } from '../api/services';
-import { BUSINESS_CATEGORIES, type Business, type BusinessCategory } from '../api/types';
+import { BUSINESS_CATEGORIES, type Business, type BusinessCategory, categoryLabel } from '../api/types';
 import { Icon } from '../components/icons';
 import { Alert, Button, Card, Chip, EmptyState, Field, Select, Skeleton } from '../components/ui';
-
-export const categoryLabel = (c: BusinessCategory) => BUSINESS_CATEGORIES.find((x) => x.value === c)?.label ?? c;
 
 export function BusinessesPage() {
   const [items, setItems] = useState<Business[] | null>(null);
