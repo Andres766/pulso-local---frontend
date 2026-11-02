@@ -1,5 +1,6 @@
-import { Link, Outlet, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Icon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 import { Logo } from './ui';
@@ -7,6 +8,7 @@ import { Logo } from './ui';
 export function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const initial = user?.name.trim().charAt(0).toUpperCase() ?? '?';
 
   return (
@@ -45,7 +47,10 @@ export function Layout() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <Outlet />
+        {/* Si una página falla, la cabecera sigue disponible; el límite se reinicia al cambiar de ruta. */}
+        <ErrorBoundary resetKey={location.pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
       <footer className="border-t border-line py-5 text-center text-xs text-ink-3 print:hidden">
         PulsoLocal · Programación Orientada a la Web · UCC Pasto

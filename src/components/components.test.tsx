@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { describeProvider, providerLabel } from '../api/providers';
 import { ConfirmProvider, useConfirm } from './confirm';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Delta, TopicEvolution } from './evolution';
 import { ThemeToggle } from './ThemeToggle';
 import { ToastProvider, useToast } from './toast';
@@ -153,5 +154,31 @@ describe('Diálogo de confirmación', () => {
     expect(ok).toBeDisabled();
     await userEvent.type(screen.getByLabelText(/Escribe «Café Galeras»/), ' Galeras');
     expect(ok).toBeEnabled();
+  });
+});
+
+/** Componente que falla al renderizar, para probar el límite de errores. */
+function Broken({ fail }: { fail: boolean }) {
+  if (fail) throw new Error('fallo de prueba');
+  return <p>contenido sano</p>;
+}
+
+describe('ErrorBoundary', () => {
+  it('muestra un mensaje amable si un hijo falla y se recupera al cambiar resetKey', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = render(
+      <ErrorBoundary resetKey="/a">
+        <Broken fail />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Algo salió mal');
+
+    rerender(
+      <ErrorBoundary resetKey="/b">
+        <Broken fail={false} />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByText('contenido sano')).toBeInTheDocument();
+    spy.mockRestore();
   });
 });

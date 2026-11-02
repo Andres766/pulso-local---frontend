@@ -1,15 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
-import { AuthProvider, RequireAuth } from './auth/AuthContext';
+import { BrowserRouter } from 'react-router';
+import { App } from './App';
+import { AuthProvider } from './auth/AuthContext';
 import { ConfirmProvider } from './components/confirm';
-import { Layout } from './components/Layout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/toast';
 import { applyTheme } from './hooks/useTheme';
-import { AccountPage } from './pages/AccountPage';
-import { AuthPage } from './pages/AuthPage';
-import { BusinessesPage } from './pages/BusinessesPage';
-import { DashboardPage } from './pages/DashboardPage';
 import './index.css';
 
 // Se aplica el tema guardado antes del primer render para evitar un destello del tema equivocado.
@@ -17,29 +14,16 @@ applyTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <ToastProvider>
-        <ConfirmProvider>
-          <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<AuthPage mode="login" />} />
-              <Route path="/registro" element={<AuthPage mode="register" />} />
-              <Route
-                element={
-                  <RequireAuth>
-                    <Layout />
-                  </RequireAuth>
-                }
-              >
-                <Route index element={<BusinessesPage />} />
-                <Route path="/negocios/:id" element={<DashboardPage />} />
-                <Route path="/cuenta" element={<AccountPage />} />
-              </Route>
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </AuthProvider>
-        </ConfirmProvider>
-      </ToastProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ToastProvider>
+          <ConfirmProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </ConfirmProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>,
 );
