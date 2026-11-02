@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { describeProvider, providerLabel } from '../api/providers';
+import { ConfirmProvider, useConfirm } from './confirm';
 import { Delta, TopicEvolution } from './evolution';
 import { ThemeToggle } from './ThemeToggle';
 import { ToastProvider, useToast } from './toast';
@@ -99,5 +101,57 @@ describe('Notificaciones', () => {
     act(() => vi.advanceTimersByTime(5000));
     expect(screen.queryByText('Guardado')).not.toBeInTheDocument();
     vi.useRealTimers();
+  });
+});
+
+/** Pide confirmación y muestra el resultado (a nivel de módulo, como exige React). */
+function AskToDelete({ requireText }: { requireText?: string }) {
+  const confirm = useConfirm();
+  const [answer, setAnswer] = useState('sin respuesta');
+  return (
+    <>
+      <button
+        type="button"
+        onClick={async () =>
+          setAnswer(String(await confirm({ title: '¿Eliminar?', message: 'No se puede deshacer', danger: true, requireText })))
+        }
+      >
+        borrar
+      </button>
+      <output>{answer}</output>
+    </>
+  );
+}
+
+describe('Diálogo de confirmación', () => {
+  it('resuelve true al confirmar y false al cancelar', async () => {
+    render(
+      <ConfirmProvider>
+        <AskToDelete />
+      </ConfirmProvider>,
+    );
+    await userEvent.click(screen.getByText('borrar'));
+    expect(screen.getByRole('dialog', { name: '¿Eliminar?' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(screen.getByText('true')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('borrar'));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(screen.getByText('false')).toBeInTheDocument();
+  });
+
+  it('para acciones irreversibles exige escribir el texto exacto', async () => {
+    render(
+      <ConfirmProvider>
+        <AskToDelete requireText="Café Galeras" />
+      </ConfirmProvider>,
+    );
+    await userEvent.click(screen.getByText('borrar'));
+    const ok = screen.getByRole('button', { name: 'Confirmar' });
+    expect(ok).toBeDisabled();
+    await userEvent.type(screen.getByLabelText(/Escribe «Café Galeras»/), 'Café');
+    expect(ok).toBeDisabled();
+    await userEvent.type(screen.getByLabelText(/Escribe «Café Galeras»/), ' Galeras');
+    expect(ok).toBeEnabled();
   });
 });

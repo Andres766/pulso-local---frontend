@@ -13,6 +13,14 @@ vi.stubGlobal(
   })),
 );
 
+// jsdom tampoco implementa los métodos modales de <dialog>.
+HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+  this.setAttribute('open', '');
+};
+HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+  this.removeAttribute('open');
+};
+
 // Cada prueba empieza con el DOM y el almacenamiento limpios.
 afterEach(() => {
   cleanup();
