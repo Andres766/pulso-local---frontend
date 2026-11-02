@@ -102,6 +102,16 @@ export interface Dashboard {
   comparison: InsightComparison | null;
 }
 
+/** Reseñas de un mes según su sentimiento (último análisis). */
+export interface MonthlySentiment {
+  month: string;
+  positive: number;
+  neutral: number;
+  negative: number;
+  total: number;
+  averageScore: number | null;
+}
+
 export interface ReviewItem {
   id: string;
   content: string;

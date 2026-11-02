@@ -5,12 +5,13 @@ import { describeProvider, providerLabel } from '../api/providers';
 import { api } from '../api/services';
 import type { AnalysisRun, Dashboard } from '../api/types';
 import { BusinessSettings } from '../components/BusinessSettings';
-import { SentimentBar, TopicChart } from '../components/charts';
+import { Legend, SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
 import { ImportPanel } from '../components/ImportPanel';
 import { Icon } from '../components/icons';
 import { KpiTiles, RecommendationList, TopicQuotes } from '../components/insights';
 import { ReviewsTable } from '../components/ReviewsTable';
+import { TrendChart } from '../components/TrendChart';
 import { useToast } from '../components/toast';
 import { Alert, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '../components/ui';
 import { printReport, saveBlob } from '../hooks/exporting';
@@ -217,6 +218,17 @@ export function DashboardPage() {
               </Card>
             </div>
           </div>
+
+          <Card
+            title="Sentimiento por mes"
+            icon="chart"
+            subtitle="Reseñas según el mes en que se escribieron, con el sentimiento del último análisis"
+          >
+            <Legend />
+            <div className="mt-4">
+              <TrendChart businessId={business.id} refreshKey={refreshKey} />
+            </div>
+          </Card>
 
           <div className="grid gap-6 lg:grid-cols-5">
             <Card

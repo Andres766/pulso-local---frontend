@@ -5,6 +5,7 @@ import type {
   BusinessCategory,
   Dashboard,
   ImportSummary,
+  MonthlySentiment,
   ReviewItem,
   ReviewSort,
   SentimentLabel,
@@ -42,6 +43,11 @@ export class BusinessService {
   }
   remove(id: string) {
     return this.client.delete<void>(`/businesses/${encodeURIComponent(id)}`);
+  }
+  trend(id: string, months: number) {
+    return this.client.get<{ runId: string | null; points: MonthlySentiment[] }>(`/businesses/${encodeURIComponent(id)}/trend`, {
+      months,
+    });
   }
   dashboard(id: string) {
     return this.client.get<Dashboard>(`/businesses/${encodeURIComponent(id)}/dashboard`);
