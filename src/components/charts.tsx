@@ -38,7 +38,7 @@ function useTooltip() {
   const node = tip && (
     <div
       role="tooltip"
-      className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-lg border border-line bg-card px-3 py-2 text-xs text-ink shadow-lg"
+      className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded-md border border-line bg-card px-3 py-2 text-xs text-ink shadow-md"
       style={{ left: tip.x, top: tip.y }}
     >
       {tip.content}
@@ -57,6 +57,29 @@ export function Legend() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Barra 100 % mínima (6px) para listas: el mismo código de color que el resto del dashboard. */
+export function SentimentStrip({
+  sentiment,
+  className = '',
+}: {
+  sentiment: Pick<InsightReport['stats']['sentiment'], SentimentLabel>;
+  className?: string;
+}) {
+  const total = sentiment.positive + sentiment.neutral + sentiment.negative;
+  const parts = ORDER.filter((s) => sentiment[s] > 0);
+  return (
+    <span
+      role="img"
+      aria-label={parts.map((s) => `${SENTIMENT_META[s].plural} ${pct(sentiment[s], total)} %`).join(', ')}
+      className={`flex h-1.5 gap-[2px] overflow-hidden rounded-full ${className}`}
+    >
+      {parts.map((s) => (
+        <span key={s} className={SENTIMENT_META[s].swatch} style={{ width: `${pct(sentiment[s], total)}%` }} />
+      ))}
+    </span>
   );
 }
 
@@ -120,9 +143,8 @@ export function TopicChart({
   const max = Math.max(1, ...topics.map((t) => t.mentions));
 
   return (
-    <div className="space-y-4">
-      <Legend />
-      <ul className="space-y-3">
+    <div className="space-y-3">
+      <ul className="-mx-2 space-y-1">
         {topics.map((t) => {
           const isSelected = selected === t.key;
           return (
@@ -131,7 +153,7 @@ export function TopicChart({
                 type="button"
                 onClick={() => onSelect(isSelected ? null : t.key)}
                 aria-pressed={isSelected}
-                className={`group w-full rounded-lg p-2 text-left transition-colors ${isSelected ? 'bg-brand-soft' : 'hover:bg-raised'}`}
+                className={`group w-full rounded-md px-2 py-1.5 text-left transition-colors ${isSelected ? 'bg-brand-soft ring-1 ring-control' : 'hover:bg-raised'}`}
               >
                 <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
                   <span className="font-medium text-ink" title={t.description}>

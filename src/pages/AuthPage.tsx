@@ -3,7 +3,8 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../api/http';
 import { useAuth } from '../auth/AuthContext';
 import { safeRedirect } from '../auth/safeRedirect';
-import { Icon, type IconName } from '../components/icons';
+import { SentimentStrip } from '../components/charts';
+import { Icon } from '../components/icons';
 import { PasswordChecklist } from '../components/PasswordChecklist';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Alert, Button, Field, Logo } from '../components/ui';
@@ -11,10 +12,12 @@ import { usePageTitle } from '../hooks/usePageTitle';
 
 type Mode = 'login' | 'register';
 
-const FEATURES: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'upload', title: 'Carga tus reseñas', text: 'Desde un CSV o pegándolas: Google Maps, Instagram, WhatsApp…' },
-  { icon: 'sparkles', title: 'La IA las lee por ti', text: 'Detecta los temas que más se repiten y el sentimiento de cada cliente.' },
-  { icon: 'target', title: 'Recibe un plan concreto', text: 'Recomendaciones priorizadas y respaldadas con cifras reales.' },
+/** Datos de ejemplo del fragmento (suman: 36 + 15 + 20 = 71). */
+const SAMPLE = { positive: 36, neutral: 15, negative: 20, total: 71 };
+const SAMPLE_ROWS = [
+  { label: 'Satisfechos', value: SAMPLE.positive },
+  { label: 'Neutros', value: SAMPLE.neutral },
+  { label: 'Insatisfechos', value: SAMPLE.negative },
 ];
 
 export function AuthPage({ mode }: { mode: Mode }) {
@@ -57,44 +60,45 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      {/* Panel de presentación */}
-      <aside className="relative hidden overflow-hidden bg-linear-to-br from-[#123e75] via-[#1c5cab] to-[#2a78d6] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-32 left-10 h-80 w-80 rounded-full bg-[#86b6ef]/20 blur-3xl" />
-
+      {/* Panel de presentación: un fragmento real de lo que produce PulsoLocal, con datos de ejemplo. */}
+      <aside className="hidden flex-col justify-between bg-[#111214] p-12 text-white lg:flex">
         <Logo inverted />
 
-        <div className="relative max-w-lg">
-          <h1 className="text-4xl font-extrabold leading-tight">Tus clientes ya te dijeron qué mejorar.</h1>
-          <p className="mt-3 text-lg text-white/80">PulsoLocal lo convierte en un plan de acción.</p>
+        <div className="max-w-lg">
+          <p className="text-4xl leading-tight font-bold tracking-tight">Tus clientes ya te dijeron qué mejorar.</p>
+          <p className="mt-3 text-lg text-white/75">Carga sus reseñas, la IA las lee por ti y te entrega un plan con cifras reales.</p>
 
-          <ul className="mt-10 space-y-5">
-            {FEATURES.map((f) => (
-              <li key={f.title} className="flex gap-4">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/15">
-                  <Icon name={f.icon} className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-semibold">{f.title}</p>
-                  <p className="text-sm text-white/75">{f.text}</p>
+          <figure data-ui className="mt-10 rounded-lg bg-white p-5 text-[#111]">
+            <div className="flex items-baseline justify-between gap-4">
+              <p className="font-semibold">Café Galeras</p>
+              <p className="num text-xs text-[#5f6368]">{SAMPLE.total} reseñas · Pasto</p>
+            </div>
+            <SentimentStrip sentiment={SAMPLE} className="mt-3" />
+            <dl className="num mt-2 grid grid-cols-3 text-xs text-[#5f6368]">
+              {SAMPLE_ROWS.map((r) => (
+                <div key={r.label}>
+                  <dt>{r.label}</dt>
+                  <dd className="text-sm font-medium text-[#111]">{Math.round((r.value / SAMPLE.total) * 100)} %</dd>
                 </div>
-              </li>
-            ))}
-          </ul>
-
-          {/* Ejemplo de lo que produce la herramienta */}
-          <div className="mt-10 rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/70">
-              <Icon name="sparkles" className="h-3.5 w-3.5" /> Ejemplo de recomendación
-            </p>
-            <p className="mt-2 font-semibold">Reduce la espera en horas pico</p>
-            <p className="mt-1 text-sm text-white/80">
-              El 25% de tus reseñas se queja del tiempo de espera. Refuerza el turno de 12 a 2 p. m.
-            </p>
-          </div>
+              ))}
+            </dl>
+            <div className="mt-4 border-[#e5e7eb] border-t pt-4">
+              <p className="font-semibold">Reduce la espera en horas pico</p>
+              <p className="mt-1 text-sm text-[#5f6368]">
+                8 de cada 71 reseñas se quejan de la espera. Refuerza la barra de 7 a 10 a. m., cuando se acumulan los pedidos.
+              </p>
+              <p className="num mt-2.5 flex items-center gap-2 text-xs text-[#5f6368]">
+                <span className="h-1 w-20 overflow-hidden rounded-full bg-[#e5e7eb]" aria-hidden>
+                  <span className="block h-full w-[22%] rounded-full bg-[#e34948]" />
+                </span>
+                Quejas sobre este tema: 11,3 % de las reseñas
+              </p>
+            </div>
+            <figcaption className="sr-only">Ejemplo de reporte de PulsoLocal</figcaption>
+          </figure>
         </div>
 
-        <p className="relative text-sm text-white/60">Programación Orientada a la Web · UCC Pasto</p>
+        <p className="text-sm text-white/60">Programación Orientada a la Web · UCC Pasto</p>
       </aside>
 
       {/* Formulario */}
@@ -106,10 +110,13 @@ export function AuthPage({ mode }: { mode: Mode }) {
           <form onSubmit={onSubmit} className="w-full max-w-sm space-y-5" noValidate>
             <Logo className="lg:hidden" />
             <div>
-              <h1 className="text-3xl font-extrabold text-ink">{isRegister ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h1>
+              <h1 className="text-2xl font-bold text-ink">{isRegister ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h1>
               <p className="mt-2 text-sm text-ink-2">
                 {isRegister ? '¿Ya tienes cuenta? ' : '¿Primera vez aquí? '}
-                <Link to={isRegister ? '/login' : '/registro'} className="font-semibold text-brand hover:underline">
+                <Link
+                  to={isRegister ? '/login' : '/registro'}
+                  className="font-semibold text-ink underline decoration-control underline-offset-4 hover:decoration-ink"
+                >
                   {isRegister ? 'Inicia sesión' : 'Crea una cuenta gratis'}
                 </Link>
               </p>
@@ -150,7 +157,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
               error={fieldErrors.password}
             />
             {isRegister && <PasswordChecklist password={form.password} email={form.email} />}
-            <Button type="submit" loading={submitting} className="w-full py-2.5">
+            <Button type="submit" loading={submitting} className="h-10 w-full">
               {isRegister ? 'Crear cuenta' : 'Entrar'}
             </Button>
             <p className="flex items-center justify-center gap-1.5 text-xs text-ink-3">

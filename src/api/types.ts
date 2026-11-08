@@ -110,6 +110,18 @@ export interface Dashboard {
   comparison: InsightComparison | null;
 }
 
+/** Pulso de un negocio para la lista "Mis negocios" (resultado de su último análisis). */
+export interface BusinessPulse {
+  business: Business;
+  reviewCount: number;
+  latestStatus: AnalysisStatus | null;
+  analyzedAt: string | null;
+  analyzedReviews: number;
+  sentiment: { positive: number; neutral: number; negative: number; averageScore: number } | null;
+  topComplaint: { key: string; name: string; complaintShare: number } | null;
+  positiveShareDelta: number | null;
+}
+
 /** Reseñas de un mes según su sentimiento (último análisis). */
 export interface MonthlySentiment {
   month: string;

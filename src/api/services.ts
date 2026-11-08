@@ -3,6 +3,7 @@ import type {
   AnalysisRun,
   Business,
   BusinessCategory,
+  BusinessPulse,
   Dashboard,
   ImportSummary,
   MonthlySentiment,
@@ -40,6 +41,9 @@ export class BusinessService {
   constructor(private readonly client: HttpClient) {}
   list() {
     return this.client.get<{ items: Business[] }>('/businesses').then((r) => r.items);
+  }
+  overview() {
+    return this.client.get<{ items: BusinessPulse[] }>('/businesses/overview').then((r) => r.items);
   }
   create(input: { name: string; category: BusinessCategory; city?: string }) {
     return this.client.post<Business>('/businesses', input);
