@@ -73,7 +73,7 @@ test('crear negocio, importar, analizar con IA, exportar y eliminar', async ({ p
 
   // Exportar CSV
   const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'CSV' }).click();
+  await page.getByRole('button', { name: 'CSV', exact: true }).click();
   expect((await download).suggestedFilename()).toMatch(/^resenas-panaderia-e2e-.*\.csv$/);
 
   // Eliminar el negocio: exige escribir su nombre exacto

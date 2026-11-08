@@ -25,11 +25,13 @@ export function Delta({
   const up = value > 0;
   const good = (up && goodWhen === 'up') || (!up && goodWhen === 'down');
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${good ? 'text-good' : 'text-critical'}`}>
+    <span className={`inline-flex flex-wrap items-center gap-x-1 text-xs font-semibold ${good ? 'text-good' : 'text-critical'}`}>
       <Icon name={up ? 'arrowUp' : 'arrowDown'} className="h-3.5 w-3.5" />
-      {up ? '+' : '−'}
-      {fmt(Math.abs(value))} {unit}
-      <span className="font-normal text-ink-3">{label}</span>
+      <span className="num whitespace-nowrap">
+        {up ? '+' : '−'}
+        {fmt(Math.abs(value))} {unit}
+      </span>
+      {label && <span className="font-normal text-ink-3">{label}</span>}
     </span>
   );
 }
@@ -39,7 +41,7 @@ const TREND: Record<TopicTrend, { label: string; icon: IconName; className: stri
   new: { label: 'Nuevo', icon: 'sparkles', className: 'bg-warning-soft text-warning', order: 1 },
   improved: { label: 'Mejoró', icon: 'arrowDown', className: 'bg-good-soft text-good', order: 2 },
   resolved: { label: 'Resuelto', icon: 'check', className: 'bg-good-soft text-good', order: 3 },
-  stable: { label: 'Estable', icon: 'clock', className: 'bg-raised text-ink-2 border border-line', order: 4 },
+  stable: { label: 'Estable', icon: 'clock', className: 'bg-brand-soft text-ink-2', order: 4 },
 };
 
 /** Tabla de cambios por tema: lo que empeoró primero, porque es lo que hay que atender. */
@@ -53,17 +55,17 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
       <table className="w-full text-sm">
         <caption className="sr-only">Quejas por tema: análisis anterior frente al actual</caption>
         <thead>
-          <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-3">
-            <th scope="col" className="py-2 pr-3 font-semibold">
+          <tr className="border-b border-line text-left text-xs text-ink-3">
+            <th scope="col" className="py-2 pr-3 font-normal">
               Tema
             </th>
-            <th scope="col" className="py-2 pr-3 text-right font-semibold">
+            <th scope="col" className="py-2 pr-3 text-right font-normal">
               Antes
             </th>
-            <th scope="col" className="py-2 pr-3 text-right font-semibold">
+            <th scope="col" className="py-2 pr-3 text-right font-normal">
               Ahora
             </th>
-            <th scope="col" className="py-2 text-right font-semibold">
+            <th scope="col" className="py-2 text-right font-normal">
               Tendencia
             </th>
           </tr>
@@ -81,7 +83,9 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
                 </td>
                 <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-ink">{fmt(t.complaintShare)}%</td>
                 <td className="py-2.5 text-right">
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${trend.className}`}>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap ${trend.className}`}
+                  >
                     <Icon name={trend.icon} className="h-3 w-3" />
                     {trend.label}
                     {t.complaintDelta !== null && t.trend !== 'stable' && (
@@ -111,8 +115,8 @@ const formatTokens = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString('e
 const STATUS: Record<AnalysisStatus, { label: string; className: string }> = {
   completed: { label: 'Completado', className: 'text-good' },
   failed: { label: 'Fallido', className: 'text-critical' },
-  running: { label: 'En curso', className: 'text-brand' },
-  pending: { label: 'En cola', className: 'text-brand' },
+  running: { label: 'En curso', className: 'text-ink' },
+  pending: { label: 'En cola', className: 'text-ink' },
 };
 
 /** Línea de tiempo de los últimos análisis. */
@@ -124,13 +128,11 @@ export function AnalysisHistory({ runs, currentId }: { runs: AnalysisRun[]; curr
         <li key={r.id} className="relative">
           <span
             aria-hidden
-            className={`absolute -left-[26px] top-1 h-3 w-3 rounded-full border-2 border-card ${r.id === currentId ? 'bg-brand' : r.status === 'failed' ? 'bg-critical' : 'bg-line'}`}
+            className={`absolute -left-[26px] top-1 h-3 w-3 rounded-full border-2 border-card ${r.id === currentId ? 'bg-pos' : r.status === 'failed' ? 'bg-critical' : 'bg-line'}`}
           />
           <p className="text-sm font-medium text-ink">
             {new Date(r.createdAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
-            {r.id === currentId && (
-              <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand">Actual</span>
-            )}
+            {r.id === currentId && <span className="ml-2 rounded bg-brand-soft px-1.5 py-0.5 text-xs font-medium text-ink">Actual</span>}
           </p>
           <p className="text-xs text-ink-2">
             <span className={`font-semibold ${STATUS[r.status].className}`}>

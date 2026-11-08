@@ -25,12 +25,12 @@ describe('Delta', () => {
     render(<Delta value={-3.2} goodWhen="down" />);
     const delta = screen.getByText(/3,2 pts/);
     expect(delta).toHaveTextContent('−3,2 pts');
-    expect(delta).toHaveClass('text-good');
+    expect(delta.parentElement).toHaveClass('text-good');
   });
 
   it('más reseñas negativas es un empeoramiento (rojo) y un cambio mínimo se informa como "sin cambios"', () => {
     const { rerender } = render(<Delta value={6.8} goodWhen="down" />);
-    expect(screen.getByText(/6,8 pts/)).toHaveClass('text-critical');
+    expect(screen.getByText(/6,8 pts/).parentElement).toHaveClass('text-critical');
     rerender(<Delta value={0.01} goodWhen="up" />);
     expect(screen.getByText(/Sin cambios/)).toBeInTheDocument();
   });

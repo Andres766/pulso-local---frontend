@@ -5,19 +5,18 @@ import { Icon, type IconName } from './icons';
 const PRIORITY: Record<Priority, { label: string; icon: IconName; text: string; bar: string; chip: string }> = {
   alta: { label: 'Prioridad alta', icon: 'alert', text: 'text-critical', bar: 'bg-critical', chip: 'bg-critical-soft text-critical' },
   media: { label: 'Prioridad media', icon: 'clock', text: 'text-warning', bar: 'bg-warning', chip: 'bg-warning-soft text-warning' },
-  baja: { label: 'Prioridad baja', icon: 'check', text: 'text-ink-3', bar: 'bg-line', chip: 'bg-raised text-ink-2' },
+  baja: { label: 'Prioridad baja', icon: 'check', text: 'text-ink-3', bar: 'bg-line', chip: 'bg-brand-soft text-ink-2' },
 };
 
 interface Tile {
   label: string;
-  value: string;
+  value: ReactNode;
   note: string;
-  icon: IconName;
-  iconClass: string;
   small?: boolean;
   extra?: ReactNode;
 }
 
+/** Cuatro cifras en UN contenedor dividido por líneas finas: son tipografía, no tarjetas. */
 export function KpiTiles({
   report,
   extras = {},
@@ -29,57 +28,50 @@ export function KpiTiles({
   const share = (n: number) => (totalReviews === 0 ? 0 : Math.round((n / totalReviews) * 100));
   const topComplaint = [...topics].sort((a, b) => b.complaintShare - a.complaintShare)[0];
   const hasComplaint = Boolean(topComplaint && topComplaint.complaintShare > 0);
+  const unit = (n: number) => (
+    <>
+      {n}
+      <span className="ml-0.5 text-base font-normal text-ink-3">%</span>
+    </>
+  );
 
   const tiles: (Tile & { key: keyof typeof extras })[] = [
-    {
-      key: 'total',
-      label: 'Reseñas analizadas',
-      value: totalReviews.toString(),
-      note: `${topics.length} temas detectados`,
-      icon: 'message',
-      iconClass: 'bg-brand-soft text-brand',
-    },
+    { key: 'total', label: 'Reseñas analizadas', value: totalReviews, note: `${topics.length} temas detectados` },
     {
       key: 'positive',
       label: 'Clientes satisfechos',
-      value: `${share(sentiment.positive)}%`,
+      value: unit(share(sentiment.positive)),
       note: `${sentiment.positive} reseñas positivas`,
-      icon: 'smile',
-      iconClass: 'bg-brand-soft text-pos',
     },
     {
       key: 'negative',
       label: 'Clientes insatisfechos',
-      value: `${share(sentiment.negative)}%`,
+      value: unit(share(sentiment.negative)),
       note: `${sentiment.negative} reseñas negativas`,
-      icon: 'frown',
-      iconClass: 'bg-critical-soft text-neg',
     },
     {
       key: 'complaint',
       label: 'Principal queja',
       value: hasComplaint ? topComplaint!.name : 'Sin quejas',
-      note: hasComplaint ? `${topComplaint!.complaintShare}% de las reseñas` : 'No hay quejas recurrentes',
-      icon: 'target',
-      iconClass: 'bg-warning-soft text-warning',
+      note: hasComplaint ? `${topComplaint!.complaintShare.toLocaleString('es-CO')} % de las reseñas` : 'No hay quejas recurrentes',
       small: true,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {tiles.map((t) => (
-        <div key={t.label} className="rounded-2xl border border-line bg-card p-4 shadow-card sm:p-5">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">{t.label}</p>
-            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${t.iconClass}`}>
-              <Icon name={t.icon} />
-            </span>
-          </div>
-          <p className={`mt-2 font-display font-extrabold tabular-nums text-ink ${t.small ? 'text-lg leading-7' : 'text-3xl'}`}>
+    <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-card lg:grid-cols-4">
+      {tiles.map((t, i) => (
+        <div
+          key={t.label}
+          className={`border-line p-5 ${i % 2 === 1 ? 'border-l' : ''} ${i >= 2 ? 'border-t lg:border-t-0' : ''} ${i === 2 ? 'lg:border-l' : ''}`}
+        >
+          <p className="text-sm font-medium text-ink-2">{t.label}</p>
+          <p
+            className={`num mt-1.5 text-ink ${t.small ? 'text-xl leading-tight font-semibold sm:leading-9' : 'text-3xl font-medium leading-9'}`}
+          >
             {t.value}
           </p>
-          <p className="mt-1 text-xs text-ink-2">{t.note}</p>
+          <p className="mt-1 text-xs text-ink-3">{t.note}</p>
           {extras[t.key] && <div className="mt-2">{extras[t.key]}</div>}
         </div>
       ))}
@@ -92,34 +84,37 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
   if (items.length === 0) return <p className="text-sm text-ink-2">No se generaron recomendaciones.</p>;
 
   return (
-    <ol className="space-y-3">
+    <ol className="-my-4 divide-y divide-line">
       {items.map((r) => {
         const p = PRIORITY[r.priority];
         return (
-          <li key={r.rank} className="relative overflow-hidden rounded-xl border border-line bg-raised/50 p-4 pl-5 break-inside-avoid">
-            <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${p.bar}`} />
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${p.chip}`}>
-                <Icon name={p.icon} className="h-3 w-3" />
-                {p.label}
-              </span>
-              {r.topicKey && topicName.has(r.topicKey) && (
-                <span className="rounded-full border border-line bg-card px-2 py-0.5 text-ink-2">{topicName.get(r.topicKey)}</span>
-              )}
-            </div>
-            <h3 className="mt-2.5 flex gap-2 font-bold text-ink">
-              <span className="tabular-nums text-ink-3">{r.rank}.</span>
-              {r.title}
-            </h3>
-            <p className="mt-1 text-sm leading-relaxed text-ink-2">{r.detail}</p>
-            {r.evidenceShare !== null && r.evidenceShare > 0 && (
-              <p className="mt-3 flex items-center gap-2 text-xs text-ink-3">
-                <span className="h-1.5 w-24 overflow-hidden rounded-full bg-line">
-                  <span className={`block h-full rounded-full ${p.bar}`} style={{ width: `${Math.min(100, r.evidenceShare * 2)}%` }} />
+          <li key={r.rank} className="grid grid-cols-[1.5rem_1fr] gap-x-2 py-4 break-inside-avoid">
+            <span className="num pt-px text-sm font-medium text-ink-3">{r.rank}.</span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
+                <h3 className="font-semibold text-ink">{r.title}</h3>
+                <span
+                  className={`inline-flex flex-none items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-medium ${p.chip}`}
+                >
+                  <Icon name={p.icon} className="h-3 w-3" />
+                  {p.label}
                 </span>
-                Quejas sobre este tema: {r.evidenceShare}% de las reseñas
-              </p>
-            )}
+              </div>
+              <p className="mt-1 text-sm leading-relaxed text-ink-2">{r.detail}</p>
+              {(r.topicKey && topicName.has(r.topicKey)) || (r.evidenceShare !== null && r.evidenceShare > 0) ? (
+                <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-3">
+                  {r.topicKey && topicName.has(r.topicKey) && <span className="font-medium text-ink-2">{topicName.get(r.topicKey)}</span>}
+                  {r.evidenceShare !== null && r.evidenceShare > 0 && (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="h-1 w-20 overflow-hidden rounded-full bg-line" aria-hidden>
+                        <span className="block h-full rounded-full bg-neg" style={{ width: `${Math.min(100, r.evidenceShare * 2)}%` }} />
+                      </span>
+                      <span className="num">Quejas sobre este tema: {r.evidenceShare.toLocaleString('es-CO')} % de las reseñas</span>
+                    </span>
+                  )}
+                </p>
+              ) : null}
+            </div>
           </li>
         );
       })}
@@ -130,11 +125,11 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
 export function TopicQuotes({ topic }: { topic: TopicStat }) {
   if (topic.sampleQuotes.length === 0) return null;
   return (
-    <div className="rounded-xl border border-line bg-raised p-4">
+    <div className="rounded-md border border-line bg-raised p-4">
       <p className="text-sm font-semibold text-ink">Lo que dicen sobre «{topic.name}»</p>
       <ul className="mt-2 space-y-2">
         {topic.sampleQuotes.map((q) => (
-          <li key={q} className="border-l-2 border-brand/40 pl-3 text-sm italic text-ink-2">
+          <li key={q} className="border-l-2 border-control pl-3 text-sm text-ink-2">
             “{q}”
           </li>
         ))}

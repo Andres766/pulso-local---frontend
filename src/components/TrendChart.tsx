@@ -12,6 +12,14 @@ const monthLabel = (m: string) => {
   return `${MONTHS[Number(mm) - 1] ?? mm} ${String(y).slice(2)}`;
 };
 
+/** Escala redonda con 3-5 marcas y la superior por encima del máximo (las columnas nunca tocan el borde). */
+export function scale(max: number): { top: number; ticks: number[] } {
+  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+  const step = steps.find((st) => Math.ceil((max + 1) / st) <= 4) ?? Math.ceil(max / 4);
+  const top = Math.ceil((max + 1) / step) * step;
+  return { top, ticks: Array.from({ length: top / step + 1 }, (_, i) => i * step) };
+}
+
 /**
  * Columnas apiladas por mes (un solo eje: cantidad de reseñas). Los colores son los mismos
  * del resto del dashboard; cada columna lleva su total como etiqueta y un tooltip nativo con el
@@ -35,33 +43,41 @@ export function TrendChart({ businessId, refreshKey }: { businessId: string; ref
   if (points === null) return <Skeleton className="h-56" />;
   if (points.length === 0) return <p className="text-sm text-ink-2">Aún no hay suficientes datos con fecha para mostrar una tendencia.</p>;
 
-  const max = Math.max(1, ...points.map((p) => p.total));
+  const { top, ticks } = scale(Math.max(1, ...points.map((p) => p.total)));
 
   return (
     <div>
-      <div className="flex h-52 items-end gap-2 border-b border-line pb-px sm:gap-3" aria-hidden>
-        {points.map((p) => (
-          <div
-            key={p.month}
-            className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
-            title={`${monthLabel(p.month)}: ${p.positive} positivas, ${p.neutral} neutras, ${p.negative} negativas`}
-          >
-            <span className="mb-1 text-xs font-semibold tabular-nums text-ink-2">{p.total > 0 ? p.total : ''}</span>
-            <div className="flex w-full max-w-12 flex-col-reverse gap-[2px]" style={{ height: `${(p.total / max) * 85}%` }}>
-              {ORDER.filter((s) => p[s] > 0).map((s, i, arr) => (
-                <div
-                  key={s}
-                  className={`${SENTIMENT_META[s].swatch} ${i === arr.length - 1 ? 'rounded-t' : ''}`}
-                  style={{ height: `${(p[s] / p.total) * 100}%` }}
-                />
-              ))}
-            </div>
+      <div className="relative h-52 pl-8" aria-hidden>
+        {ticks.map((t) => (
+          <div key={t} className="absolute inset-x-0 flex items-center" style={{ bottom: `${(t / top) * 100}%` }}>
+            <span className="num w-8 -translate-y-px pr-2 text-right text-[11px] leading-none text-ink-3">{t}</span>
+            <span className={`h-px flex-1 ${t === 0 ? 'bg-control' : 'bg-line'}`} />
           </div>
         ))}
+        <div className="relative flex h-full items-end gap-2 sm:gap-4">
+          {points.map((p) => (
+            <div
+              key={p.month}
+              className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
+              title={`${monthLabel(p.month)}: ${p.positive} positivas, ${p.neutral} neutras, ${p.negative} negativas`}
+            >
+              <span className="num mb-1 text-xs font-medium text-ink-2">{p.total > 0 ? p.total : ''}</span>
+              <div className="flex w-full max-w-14 flex-col-reverse gap-[2px]" style={{ height: `${(p.total / top) * 100}%` }}>
+                {ORDER.filter((s) => p[s] > 0).map((s, i, arr) => (
+                  <div
+                    key={s}
+                    className={`${SENTIMENT_META[s].swatch} ${i === arr.length - 1 ? 'rounded-t-sm' : ''}`}
+                    style={{ height: `${(p[s] / p.total) * 100}%` }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="mt-1.5 flex gap-2 sm:gap-3" aria-hidden>
+      <div className="mt-1.5 flex gap-2 pl-8 sm:gap-4" aria-hidden>
         {points.map((p) => (
-          <span key={p.month} className="min-w-0 flex-1 truncate text-center text-[11px] text-ink-3">
+          <span key={p.month} className="min-w-0 flex-1 truncate text-center text-xs text-ink-3">
             {monthLabel(p.month)}
           </span>
         ))}
@@ -71,7 +87,7 @@ export function TrendChart({ businessId, refreshKey }: { businessId: string; ref
         <summary className="cursor-pointer text-ink-2 hover:text-ink">Ver como tabla</summary>
         <table className="mt-2 w-full text-left tabular-nums">
           <caption className="sr-only">Reseñas por mes y sentimiento</caption>
-          <thead className="text-xs uppercase text-ink-3">
+          <thead className="text-xs text-ink-3">
             <tr>
               <th scope="col" className="py-1">
                 Mes

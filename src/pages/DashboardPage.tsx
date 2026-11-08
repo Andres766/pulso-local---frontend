@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { ApiError } from '../api/http';
-import { describeProvider, providerLabel } from '../api/providers';
+import { describeProvider } from '../api/providers';
 import { api } from '../api/services';
-import { type AnalysisRun, categoryLabel, type Dashboard, MAX_ANALYSIS_ATTEMPTS } from '../api/types';
+import {
+  type AnalysisRun,
+  categoryLabel,
+  type Dashboard,
+  type InsightComparison,
+  type InsightReport,
+  MAX_ANALYSIS_ATTEMPTS,
+} from '../api/types';
 import { BusinessSettings } from '../components/BusinessSettings';
 import { Legend, SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
@@ -13,7 +20,7 @@ import { KpiTiles, RecommendationList, TopicQuotes } from '../components/insight
 import { ReviewsTable } from '../components/ReviewsTable';
 import { TrendChart } from '../components/TrendChart';
 import { useToast } from '../components/toast';
-import { Alert, Button, Card, Chip, EmptyState, Skeleton, Spinner } from '../components/ui';
+import { Alert, Button, Card, EmptyState, Skeleton, Spinner } from '../components/ui';
 import { printReport, saveBlob } from '../hooks/exporting';
 import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -29,11 +36,33 @@ function DashboardSkeleton() {
           <Skeleton key={i} className="h-32" />
         ))}
       </div>
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-5">
         <Skeleton className="h-96 lg:col-span-3" />
         <Skeleton className="h-96 lg:col-span-2" />
       </div>
     </div>
+  );
+}
+
+const pts = (n: number) => `${n.toLocaleString('es-CO', { maximumFractionDigits: 1 })} ${Math.abs(n) === 1 ? 'punto' : 'puntos'}`;
+
+/** El hallazgo del último análisis en una frase: la queja que más pesa y cómo cambió. */
+function Finding({ report, comparison }: { report: InsightReport; comparison: InsightComparison | null }) {
+  const top = [...report.stats.topics].sort((a, b) => b.complaintShare - a.complaintShare)[0];
+  if (!top || top.complaintShare === 0) {
+    return <p className="text-base text-ink">Ningún tema acumula quejas en este análisis.</p>;
+  }
+  const delta = comparison?.topics.find((t) => t.key === top.key)?.complaintDelta ?? null;
+  let change = '';
+  if (delta !== null) {
+    if (Math.abs(delta) < 0.05) change = ', igual que en el análisis anterior';
+    else change = `, ${pts(Math.abs(delta))} ${delta < 0 ? 'menos' : 'más'} que en el análisis anterior`;
+  }
+  return (
+    <p className="max-w-3xl text-base text-ink">
+      La queja que más se repite es <strong className="font-semibold">{top.name.toLowerCase()}</strong>:{' '}
+      <span className="num">{top.complaintShare.toLocaleString('es-CO')} %</span> de las reseñas{change}.
+    </p>
   );
 }
 
@@ -111,37 +140,58 @@ export function DashboardPage() {
   const topComplaintKey = report ? [...report.stats.topics].sort((a, b) => b.complaintShare - a.complaintShare)[0]?.key : undefined;
   const topComplaintChange = comparison?.topics.find((t) => t.key === topComplaintKey);
 
+  const importCard = (
+    <Card
+      title="Cargar reseñas"
+      subtitle="De Google Maps, Instagram, WhatsApp o tu buzón de sugerencias"
+      className="lg:col-span-2 print:hidden"
+    >
+      <ImportPanel businessId={business.id} onImported={() => void load()} />
+    </Card>
+  );
+  const reviewsCard = (
+    <Card title="Reseñas" subtitle={selectedTopic ? `Filtrando por «${selectedTopic.name}»` : 'Todas las reseñas del negocio'}>
+      {selectedTopic && (
+        <div className="mb-4">
+          <TopicQuotes topic={selectedTopic} />
+        </div>
+      )}
+      <ReviewsTable
+        businessId={business.id}
+        topics={report?.stats.topics ?? []}
+        topicFilter={topicFilter}
+        onTopicFilter={setTopicFilter}
+        refreshKey={refreshKey}
+        onChanged={() => void load()}
+      />
+    </Card>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Encabezado que solo aparece en el reporte impreso / PDF */}
-      <div className="hidden border-b border-line pb-4 print:block">
-        <p className="text-xs uppercase tracking-wide text-ink-3">Reporte de PulsoLocal</p>
+      <div className="hidden border-line border-b pb-4 print:block">
+        <p className="text-sm font-semibold text-ink">Reporte de PulsoLocal</p>
         <p className="text-sm text-ink-2">Generado el {new Date().toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}</p>
       </div>
 
-      <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink print:hidden">
-        <Icon name="chevronLeft" /> Mis negocios
-      </Link>
-
-      {/* Cabecera del negocio */}
-      <header className="flex flex-wrap items-center justify-between gap-5 rounded-lg border border-line bg-card p-5 sm:p-6">
-        <div className="flex items-center gap-4">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-linear-to-br from-[#1c5cab] to-[#2a78d6] text-2xl font-bold text-white">
-            {business.name.charAt(0).toUpperCase()}
-          </span>
-          <div>
-            <h1 className="text-2xl font-bold text-ink sm:text-3xl">{business.name}</h1>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <Chip icon="tag">{categoryLabel(business.category)}</Chip>
-              {business.city && <Chip icon="pin">{business.city}</Chip>}
-              <Chip icon="message">{dashboard.reviewCount} reseñas</Chip>
-              {reportRun?.finishedAt && (
-                <Chip icon="sparkles" tone="brand">
-                  {providerLabel(reportRun.provider)} · {formatDate(reportRun.finishedAt)}
-                </Chip>
-              )}
-            </div>
-          </div>
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
+          <Link to="/" className="inline-flex items-center gap-1 text-sm text-ink-2 hover:text-ink print:hidden">
+            <Icon name="chevronLeft" className="h-4 w-4" /> Mis negocios
+          </Link>
+          <h1 className="mt-1 text-2xl font-bold text-ink">{business.name}</h1>
+          <p className="mt-1 text-sm text-ink-2">
+            {[
+              categoryLabel(business.category),
+              business.city,
+              `${dashboard.reviewCount} reseñas`,
+              reportRun?.finishedAt &&
+                `analizado con ${usesLlm ? describeProvider(reportRun.provider).name : 'el léxico local'} el ${formatDate(reportRun.finishedAt)}`,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
           <Button variant="ghost" icon="tag" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
@@ -158,6 +208,8 @@ export function DashboardPage() {
           </Button>
         </div>
       </header>
+
+      {report && <Finding report={report} comparison={comparison} />}
 
       {editing && (
         <BusinessSettings
@@ -199,7 +251,7 @@ export function DashboardPage() {
             }
           />
 
-          <div className="grid gap-6 lg:grid-cols-5">
+          <div className="grid gap-4 lg:grid-cols-5">
             <Card
               title="Recomendaciones para tu negocio"
               subtitle={
@@ -211,7 +263,7 @@ export function DashboardPage() {
             >
               <RecommendationList items={report.recommendations} topics={report.stats.topics} />
             </Card>
-            <div className="space-y-6 lg:col-span-2">
+            <div className="space-y-4 lg:col-span-2">
               <Card
                 title="Sentimiento general"
                 subtitle={`${report.stats.totalReviews} reseñas · puntaje promedio ${report.stats.sentiment.averageScore} (de −1 a 1)`}
@@ -224,14 +276,19 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <Card title="Sentimiento por mes" subtitle="Reseñas según el mes en que se escribieron, con el sentimiento del último análisis">
-            <Legend />
-            <div className="mt-4">
+          <div className="grid items-start gap-4 lg:grid-cols-5">
+            <Card
+              title="Sentimiento por mes"
+              subtitle="Reseñas según el mes en que se escribieron"
+              action={<Legend />}
+              className="lg:col-span-3"
+            >
               <TrendChart businessId={business.id} refreshKey={refreshKey} />
-            </div>
-          </Card>
+            </Card>
+            {importCard}
+          </div>
 
-          <div className="grid gap-6 lg:grid-cols-5">
+          <div className="grid items-start gap-4 lg:grid-cols-5">
             <Card
               title="Evolución desde el análisis anterior"
               subtitle={
@@ -250,7 +307,7 @@ export function DashboardPage() {
                 </p>
               )}
             </Card>
-            <Card title="Historial de análisis" className="h-fit lg:col-span-2 print:hidden">
+            <Card title="Historial de análisis" className="lg:col-span-2 print:hidden">
               <AnalysisHistory runs={dashboard.history} currentId={reportRun?.id ?? null} />
             </Card>
           </div>
@@ -265,34 +322,14 @@ export function DashboardPage() {
         )
       )}
 
-      <div className="grid gap-6 lg:grid-cols-5 print:hidden">
-        <Card
-          title="Reseñas"
-          subtitle={selectedTopic ? `Filtrando por «${selectedTopic.name}»` : 'Todas las reseñas del negocio'}
-          className="lg:col-span-3"
-        >
-          {selectedTopic && (
-            <div className="mb-4">
-              <TopicQuotes topic={selectedTopic} />
-            </div>
-          )}
-          <ReviewsTable
-            businessId={business.id}
-            topics={report?.stats.topics ?? []}
-            topicFilter={topicFilter}
-            onTopicFilter={setTopicFilter}
-            refreshKey={refreshKey}
-            onChanged={() => void load()}
-          />
-        </Card>
-        <Card
-          title="Cargar reseñas"
-          subtitle="De Google Maps, Instagram, WhatsApp o tu buzón de sugerencias"
-          className="h-fit lg:col-span-2"
-        >
-          <ImportPanel businessId={business.id} onImported={() => void load()} />
-        </Card>
-      </div>
+      {report ? (
+        <div className="print:hidden">{reviewsCard}</div>
+      ) : (
+        <div className="grid items-start gap-4 lg:grid-cols-5 print:hidden">
+          <div className="lg:col-span-3">{reviewsCard}</div>
+          {importCard}
+        </div>
+      )}
     </div>
   );
 }
