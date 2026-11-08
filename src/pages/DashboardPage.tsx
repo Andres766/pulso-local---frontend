@@ -124,13 +124,13 @@ export function DashboardPage() {
       </Link>
 
       {/* Cabecera del negocio */}
-      <header className="flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-line bg-card p-5 shadow-card sm:p-6">
+      <header className="flex flex-wrap items-center justify-between gap-5 rounded-lg border border-line bg-card p-5 sm:p-6">
         <div className="flex items-center gap-4">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-[#1c5cab] to-[#2a78d6] font-display text-2xl font-extrabold text-white">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-linear-to-br from-[#1c5cab] to-[#2a78d6] text-2xl font-bold text-white">
             {business.name.charAt(0).toUpperCase()}
           </span>
           <div>
-            <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">{business.name}</h1>
+            <h1 className="text-2xl font-bold text-ink sm:text-3xl">{business.name}</h1>
             <div className="mt-2 flex flex-wrap gap-1.5">
               <Chip icon="tag">{categoryLabel(business.category)}</Chip>
               {business.city && <Chip icon="pin">{business.city}</Chip>}
@@ -202,7 +202,6 @@ export function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-5">
             <Card
               title="Recomendaciones para tu negocio"
-              icon="target"
               subtitle={
                 usesLlm
                   ? 'Redactadas por IA a partir de las cifras reales de tus reseñas'
@@ -215,22 +214,17 @@ export function DashboardPage() {
             <div className="space-y-6 lg:col-span-2">
               <Card
                 title="Sentimiento general"
-                icon="smile"
                 subtitle={`${report.stats.totalReviews} reseñas · puntaje promedio ${report.stats.sentiment.averageScore} (de −1 a 1)`}
               >
                 <SentimentBar sentiment={report.stats.sentiment} />
               </Card>
-              <Card title="Temas recurrentes" icon="chart" subtitle="Menciones por tema y su sentimiento">
+              <Card title="Temas recurrentes" subtitle="Menciones por tema y su sentimiento">
                 <TopicChart topics={report.stats.topics} selected={topicFilter} onSelect={setTopicFilter} />
               </Card>
             </div>
           </div>
 
-          <Card
-            title="Sentimiento por mes"
-            icon="chart"
-            subtitle="Reseñas según el mes en que se escribieron, con el sentimiento del último análisis"
-          >
+          <Card title="Sentimiento por mes" subtitle="Reseñas según el mes en que se escribieron, con el sentimiento del último análisis">
             <Legend />
             <div className="mt-4">
               <TrendChart businessId={business.id} refreshKey={refreshKey} />
@@ -240,7 +234,6 @@ export function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-5">
             <Card
               title="Evolución desde el análisis anterior"
-              icon="chart"
               subtitle={
                 dashboard.previousRun
                   ? `Comparado con el análisis del ${formatDate(dashboard.previousRun.createdAt)}`
@@ -257,7 +250,7 @@ export function DashboardPage() {
                 </p>
               )}
             </Card>
-            <Card title="Historial de análisis" icon="clock" className="h-fit lg:col-span-2 print:hidden">
+            <Card title="Historial de análisis" className="h-fit lg:col-span-2 print:hidden">
               <AnalysisHistory runs={dashboard.history} currentId={reportRun?.id ?? null} />
             </Card>
           </div>
@@ -275,7 +268,6 @@ export function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-5 print:hidden">
         <Card
           title="Reseñas"
-          icon="message"
           subtitle={selectedTopic ? `Filtrando por «${selectedTopic.name}»` : 'Todas las reseñas del negocio'}
           className="lg:col-span-3"
         >
@@ -295,7 +287,6 @@ export function DashboardPage() {
         </Card>
         <Card
           title="Cargar reseñas"
-          icon="upload"
           subtitle="De Google Maps, Instagram, WhatsApp o tu buzón de sugerencias"
           className="h-fit lg:col-span-2"
         >

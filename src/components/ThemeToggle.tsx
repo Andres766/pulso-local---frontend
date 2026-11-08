@@ -11,14 +11,14 @@ const OPTIONS: { value: ThemePreference; icon: IconName; label: string }[] = [
 export function ThemeToggle() {
   const { preference, choose } = useTheme();
   return (
-    <fieldset className="inline-flex rounded-xl border border-line bg-raised p-0.5">
+    <fieldset className="inline-flex rounded-md border border-line bg-raised p-0.5">
       <legend className="sr-only">Tema de la interfaz</legend>
       {OPTIONS.map((o) => (
         <label
           key={o.value}
           title={o.label}
           className={`grid h-7 w-7 cursor-pointer place-items-center rounded-lg transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-brand ${
-            preference === o.value ? 'bg-card text-ink shadow-sm' : 'text-ink-3 hover:text-ink'
+            preference === o.value ? 'bg-card text-ink ring-1 ring-line' : 'text-ink-3 hover:text-ink'
           }`}
         >
           <input

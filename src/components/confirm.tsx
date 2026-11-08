@@ -58,7 +58,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           e.preventDefault(); // Esc: se cierra por la misma vía que "Cancelar"
           close(false);
         }}
-        className="m-auto w-[min(28rem,calc(100%-2rem))] rounded-2xl border border-line bg-card p-0 text-ink shadow-2xl backdrop:bg-black/40"
+        className="m-auto w-[min(28rem,calc(100%-2rem))] rounded-lg border border-line bg-card p-0 text-ink shadow-2xl backdrop:bg-black/40"
       >
         {options && (
           <form

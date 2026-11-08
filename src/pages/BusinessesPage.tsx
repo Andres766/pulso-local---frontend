@@ -50,7 +50,7 @@ export function BusinessesPage() {
     <div className="space-y-8">
       <div>
         <p className="text-sm font-semibold text-brand">Panel</p>
-        <h1 className="mt-1 text-3xl font-extrabold text-ink">Mis negocios</h1>
+        <h1 className="mt-1 text-3xl font-bold text-ink">Mis negocios</h1>
         <p className="mt-1 text-ink-2">Elige un negocio para ver su pulso o registra uno nuevo.</p>
       </div>
 
@@ -73,10 +73,10 @@ export function BusinessesPage() {
                 <li key={b.id}>
                   <Link
                     to={`/negocios/${b.id}`}
-                    className="group flex h-full flex-col rounded-2xl border border-line bg-card p-5 shadow-card transition hover:-translate-y-0.5 hover:border-brand/50"
+                    className="group flex h-full flex-col rounded-lg border border-line bg-card p-5 transition hover:-translate-y-0.5 hover:border-brand/50"
                   >
                     <div className="flex items-start justify-between">
-                      <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-soft font-display text-lg font-extrabold text-brand">
+                      <span className="grid h-11 w-11 place-items-center rounded-md bg-brand-soft text-lg font-bold text-brand">
                         {b.name.charAt(0).toUpperCase()}
                       </span>
                       <Icon
@@ -84,7 +84,7 @@ export function BusinessesPage() {
                         className="h-5 w-5 text-ink-3 transition group-hover:translate-x-0.5 group-hover:text-brand"
                       />
                     </div>
-                    <p className="mt-4 font-display text-lg font-bold text-ink">{b.name}</p>
+                    <p className="mt-4 text-lg font-bold text-ink">{b.name}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <Chip icon="tag">{categoryLabel(b.category)}</Chip>
                       {b.city && <Chip icon="pin">{b.city}</Chip>}
@@ -97,7 +97,7 @@ export function BusinessesPage() {
           )}
         </div>
 
-        <Card title="Nuevo negocio" icon="plus" className="h-fit">
+        <Card title="Nuevo negocio" className="h-fit">
           <form onSubmit={onCreate} className="space-y-4">
             <Field
               label="Nombre"

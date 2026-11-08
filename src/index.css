@@ -4,67 +4,66 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /*
- * Tokens de diseño. El sentimiento es una variable de POLARIDAD → escala divergente:
- * azul (positivo) ↔ gris neutro ↔ rojo (negativo). Paleta validada para daltonismo
- * (ΔE CVD ≥ 11 en claro, ≥ 14 en oscuro); el gris siempre lleva etiqueta visible.
+ * Tokens de diseño. La interfaz es acromática (tinta sobre un fondo gris azulado, como un libro
+ * contable) y el color queda reservado para los DATOS: el sentimiento es una variable de polaridad
+ * → escala divergente azul (positivo) ↔ gris neutro ↔ rojo (negativo). Paleta validada para
+ * daltonismo (ΔE CVD ≥ 11 en claro, ≥ 14 en oscuro); el gris siempre lleva etiqueta visible.
+ * La acción principal es casi negra; ningún gris que lleve texto baja de 4,5:1.
  */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-surface: #f4f5f7;
+  --color-surface: #f2f4f7;
   --color-card: #ffffff;
-  --color-raised: #f9fafb;
-  --color-ink: #0f1115;
-  --color-ink-2: #4b4f58;
-  --color-ink-3: #7c808a;
-  --color-line: #e3e5ea;
-  --color-brand: #1c5cab;
-  --color-brand-strong: #164a8a;
-  --color-brand-soft: #e8f0fb;
+  --color-raised: #f7f8fa;
+  --color-ink: #111111;
+  --color-ink-2: #5f6368;
+  --color-ink-3: #6b6b6b;
+  --color-line: #e5e7eb;
+  --color-control: #d1d5db;
+  --color-brand: #1d1f20;
+  --color-brand-strong: #000000;
+  --color-brand-soft: #ebedf0;
   --color-on-brand: #ffffff;
 
   --color-pos: #2a78d6;
   --color-neu: #a3a19a;
   --color-neg: #e34948;
 
-  --color-critical: #c93434;
-  --color-critical-soft: #fdecec;
-  --color-warning: #a86b00;
-  --color-warning-soft: #fdf3dc;
-  --color-good: #0a7f0a;
-  --color-good-soft: #e5f6e5;
-
-  --shadow-card: 0 1px 2px rgb(15 17 21 / 0.04), 0 4px 16px -8px rgb(15 17 21 / 0.08);
+  --color-critical: #c4242a;
+  --color-critical-soft: #ffedea;
+  --color-warning: #92400e;
+  --color-warning-soft: #fff4d6;
+  --color-good: #247b50;
+  --color-good-soft: #dcfae5;
 }
 
 @layer base {
-  /* Tema oscuro: valores propios (no una inversión automática), validados contra la superficie oscura. */
+  /* Tema oscuro: neutros reales (sin azul marino), validados contra la superficie oscura. */
   :root[data-theme="dark"] {
-    --color-surface: #0f1012;
-    --color-card: #17181b;
-    --color-raised: #1d1f23;
-    --color-ink: #f5f5f4;
-    --color-ink-2: #c3c2b7;
-    --color-ink-3: #8f8e87;
-    --color-line: #2a2c31;
-    --color-brand: #5598e7;
-    --color-brand-strong: #86b6ef;
-    --color-brand-soft: #182436;
-    --color-on-brand: #0b1220;
+    --color-surface: #0c0c0d;
+    --color-card: #161617;
+    --color-raised: #1e1e20;
+    --color-ink: #f5f5f5;
+    --color-ink-2: #b4b4b4;
+    --color-ink-3: #949494;
+    --color-line: #2a2a2c;
+    --color-control: #444446;
+    --color-brand: #f5f5f5;
+    --color-brand-strong: #ffffff;
+    --color-brand-soft: #262628;
+    --color-on-brand: #111111;
 
     --color-pos: #3987e5;
     --color-neu: #56554f;
     --color-neg: #e66767;
 
     --color-critical: #ef7a7a;
-    --color-critical-soft: #2d1a1a;
+    --color-critical-soft: #2c1a1c;
     --color-warning: #f2b23a;
     --color-warning-soft: #2b2314;
-    --color-good: #57c957;
-    --color-good-soft: #172617;
-
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --color-good: #3fc07a;
+    --color-good-soft: #172a1d;
     color-scheme: dark;
   }
 
@@ -75,21 +74,20 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1,
-  h2,
-  h3 {
-    font-family: var(--font-display);
-    letter-spacing: -0.01em;
+  h1 {
+    letter-spacing: -0.02em;
+  }
+
+  /* Cifras que se comparan o se actualizan: dígitos del mismo ancho. */
+  .num,
+  table {
+    font-variant-numeric: tabular-nums;
   }
 
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
   }
-}
-
-@utility shadow-card {
-  box-shadow: var(--shadow-card);
 }
 
 /* Reporte impreso / "Guardar como PDF" */
@@ -105,9 +103,6 @@
   li,
   tr {
     break-inside: avoid;
-  }
-  .shadow-card {
-    box-shadow: none;
   }
 }
 

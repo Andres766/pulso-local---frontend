@@ -63,7 +63,7 @@ export function BusinessSettings({
   }
 
   return (
-    <Card title="Datos del negocio" icon="store" className="print:hidden">
+    <Card title="Datos del negocio" className="print:hidden">
       <form onSubmit={save} className="grid gap-4 sm:grid-cols-3">
         <Field
           label="Nombre"

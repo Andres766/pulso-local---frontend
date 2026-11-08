@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Icon } from './icons';
@@ -14,6 +14,11 @@ function PageSkeleton() {
     </div>
   );
 }
+
+const NAV = [
+  { to: '/', label: 'Mis negocios', end: true },
+  { to: '/cuenta', label: 'Mi cuenta', end: false },
+];
 
 export function Layout() {
   const { user, logout } = useAuth();
@@ -37,24 +42,40 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       <a
         href="#contenido"
-        className="sr-only z-50 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-on-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
+        className="sr-only z-50 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-on-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
       >
         Saltar al contenido
       </a>
-      <header className="sticky top-0 z-20 border-b border-line bg-card/85 backdrop-blur-md print:hidden">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-          <Link to="/" aria-label="Ir a mis negocios">
-            <Logo />
-          </Link>
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-20 border-b border-line bg-surface print:hidden">
+        <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-4 px-4">
+          <div className="flex items-center gap-6">
+            <Link to="/" aria-label="PulsoLocal: ir a mis negocios">
+              <Logo />
+            </Link>
+            <nav aria-label="Principal" className="hidden items-center gap-1 sm:flex">
+              {NAV.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `rounded-md px-2.5 py-1 text-sm font-medium transition-colors ${isActive ? 'bg-brand-soft text-ink' : 'text-ink-2 hover:text-ink'}`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
               to="/cuenta"
-              className="flex items-center gap-2 rounded-xl px-1.5 py-1 transition-colors hover:bg-raised"
-              title="Mi cuenta"
-              aria-label="Mi cuenta"
+              className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-brand-soft"
+              title={`Cuenta de ${user?.name ?? ''}`}
+              aria-label={`Cuenta de ${user?.name ?? ''}`}
             >
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-sm font-bold text-brand" aria-hidden>
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-[#dbe7f6] text-xs font-semibold text-[#1c4f8f]" aria-hidden>
                 {initial}
               </span>
               <span className="hidden text-sm font-medium text-ink sm:inline">{user?.name}</span>
@@ -65,7 +86,7 @@ export function Layout() {
                 await logout();
                 navigate('/login');
               }}
-              className="grid h-9 w-9 place-items-center rounded-xl text-ink-2 transition-colors hover:bg-raised hover:text-ink"
+              className="grid h-8 w-8 place-items-center rounded-md text-ink-2 transition-colors hover:bg-brand-soft hover:text-ink"
               aria-label="Cerrar sesión"
               title="Cerrar sesión"
             >
@@ -74,7 +95,7 @@ export function Layout() {
           </div>
         </div>
       </header>
-      <main id="contenido" ref={main} tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 outline-none">
+      <main id="contenido" ref={main} tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-12 outline-none">
         {/* Si una página falla, la cabecera sigue disponible; el límite se reinicia al cambiar de ruta. */}
         <ErrorBoundary resetKey={location.pathname}>
           {/* Mientras llega el código de la página, la cabecera sigue visible. */}
@@ -83,8 +104,11 @@ export function Layout() {
           </Suspense>
         </ErrorBoundary>
       </main>
-      <footer className="border-t border-line py-5 text-center text-xs text-ink-3 print:hidden">
-        PulsoLocal · Programación Orientada a la Web · UCC Pasto
+      <footer className="border-t border-line print:hidden">
+        <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2 px-4 py-4 text-xs text-ink-3">
+          <span>PulsoLocal · reseñas de clientes convertidas en un plan de acción</span>
+          <span>Programación Orientada a la Web · UCC Pasto</span>
+        </div>
       </footer>
     </div>
   );

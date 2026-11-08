@@ -48,7 +48,7 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
   }
 
   const tabClass = (active: boolean) =>
-    `rounded-md px-3 py-1.5 text-sm font-medium ${active ? 'bg-card text-ink shadow-sm' : 'text-ink-2 hover:text-ink'}`;
+    `rounded-md px-3 py-1.5 text-sm font-medium ${active ? 'bg-card text-ink ring-1 ring-line' : 'text-ink-2 hover:text-ink'}`;
 
   return (
     <div className="space-y-3">
@@ -68,7 +68,7 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
             type="file"
             accept=".csv,text/csv"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand"
+            className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-md file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-ink"
           />
           <p className="text-xs text-ink-3">
             Columnas reconocidas: <code>comentario</code> (o texto, reseña), <code>calificacion</code> (1–5) y <code>fecha</code>. Separador

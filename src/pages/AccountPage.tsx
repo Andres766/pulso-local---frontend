@@ -68,14 +68,13 @@ export function AccountPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <p className="text-sm font-semibold text-brand">Configuración</p>
-        <h1 className="mt-1 text-3xl font-extrabold text-ink">Mi cuenta</h1>
+        <h1 className="text-2xl font-bold text-ink">Mi cuenta</h1>
         <p className="mt-1 text-ink-2">
           {user?.name} · {user?.email}
         </p>
       </div>
 
-      <Card title="Cambiar contraseña" icon="shield" subtitle="Al cambiarla se cierran las sesiones abiertas en otros dispositivos.">
+      <Card title="Cambiar contraseña" subtitle="Al cambiarla se cierran las sesiones abiertas en otros dispositivos.">
         <form onSubmit={changePassword} className="space-y-4">
           <Field
             label="Contraseña actual"
@@ -113,7 +112,7 @@ export function AccountPage() {
         </form>
       </Card>
 
-      <section className="rounded-2xl border border-critical/40 bg-card p-5 shadow-card sm:p-6">
+      <section className="rounded-lg border border-critical/40 bg-card p-5 sm:p-6">
         <h2 className="text-base font-bold text-critical">Eliminar cuenta</h2>
         <p className="mt-1 text-sm text-ink-2">
           Derecho de supresión (Ley 1581 de 2012): borra tu cuenta y todos tus datos de forma permanente. Confirma con tu contraseña.

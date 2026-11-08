@@ -86,7 +86,7 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
   }, [businessId, sentiment, topicFilter, query, rating, sort, offset, refreshKey]);
 
   const selectClass =
-    'rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15';
+    'rounded-md border border-line bg-card px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15';
 
   return (
     <div className="space-y-3">
@@ -141,7 +141,7 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           <option value="">Todas las estrellas</option>
           {[5, 4, 3, 2, 1].map((n) => (
             <option key={n} value={n}>
-              {'★'.repeat(n)} ({n})
+              {n} {n === 1 ? 'estrella' : 'estrellas'}
             </option>
           ))}
         </select>
@@ -186,12 +186,13 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
                   )}
                   {r.rating && (
                     <span role="img" aria-label={`${r.rating} de 5 estrellas`}>
-                      {'★'.repeat(r.rating)}
-                      <span className="text-line">{'★'.repeat(5 - r.rating)}</span>
+                      {/* Las estrellas son la forma propia del dato (calificación 1-5), no decoración. */}
+                      {'★'.repeat(r.rating) /* taste-skill-ignore */}
+                      <span className="text-line">{'★'.repeat(5 - r.rating) /* taste-skill-ignore */}</span>
                     </span>
                   )}
                   {r.topics.map((t) => (
-                    <span key={t} className="rounded-full bg-raised px-2 py-0.5">
+                    <span key={t} className="whitespace-nowrap rounded bg-raised px-1.5 py-0.5">
                       {t}
                     </span>
                   ))}
