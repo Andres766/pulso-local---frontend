@@ -108,9 +108,18 @@ export class AnalysisService {
   }
 }
 
+export class RealtimeService {
+  constructor(private readonly client: HttpClient) {}
+  /** Ticket de un solo uso para abrir el WebSocket (y su URL, o null para el mismo origen). */
+  ticket() {
+    return this.client.post<{ ticket: string; url: string | null; expiresInSeconds: number }>('/realtime/ticket');
+  }
+}
+
 export const api = {
   auth: new AuthService(http),
   businesses: new BusinessService(http),
   reviews: new ReviewService(http),
   analyses: new AnalysisService(http),
+  realtime: new RealtimeService(http),
 };

@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router';
 import { api } from '../api/services';
 import type { User } from '../api/types';
 import { FullPageSpinner } from '../components/ui';
+import { realtime } from '../realtime/useRealtime';
 
 interface AuthState {
   user: User | null;
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const logout = useCallback(async () => {
     await api.auth.logout().catch(() => undefined);
+    realtime.disconnect();
     setUser(null);
   }, []);
 
