@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import type { InsightReport, Priority, Recommendation, TopicStat } from '../api/types';
+import { useI18n } from '../i18n/I18nContext';
+import type { MessageKey } from '../i18n/messages';
 import { Icon, type IconName } from './icons';
 
-const PRIORITY: Record<Priority, { label: string; icon: IconName; text: string; bar: string; chip: string }> = {
-  alta: { label: 'Prioridad alta', icon: 'alert', text: 'text-critical', bar: 'bg-critical', chip: 'bg-critical-soft text-critical' },
-  media: { label: 'Prioridad media', icon: 'clock', text: 'text-warning', bar: 'bg-warning', chip: 'bg-warning-soft text-warning' },
-  baja: { label: 'Prioridad baja', icon: 'check', text: 'text-ink-3', bar: 'bg-line', chip: 'bg-brand-soft text-ink-2' },
+const PRIORITY: Record<Priority, { label: MessageKey; icon: IconName; text: string; bar: string; chip: string }> = {
+  alta: { label: 'priority.alta', icon: 'alert', text: 'text-critical', bar: 'bg-critical', chip: 'bg-critical-soft text-critical' },
+  media: { label: 'priority.media', icon: 'clock', text: 'text-warning', bar: 'bg-warning', chip: 'bg-warning-soft text-warning' },
+  baja: { label: 'priority.baja', icon: 'check', text: 'text-ink-3', bar: 'bg-line', chip: 'bg-brand-soft text-ink-2' },
 };
 
 interface Tile {
@@ -24,6 +26,7 @@ export function KpiTiles({
   report: InsightReport;
   extras?: Partial<Record<'total' | 'positive' | 'negative' | 'complaint', ReactNode>>;
 }) {
+  const { t, number } = useI18n();
   const { sentiment, totalReviews, topics } = report.stats;
   const share = (n: number) => (totalReviews === 0 ? 0 : Math.round((n / totalReviews) * 100));
   const topComplaint = [...topics].sort((a, b) => b.complaintShare - a.complaintShare)[0];
@@ -36,24 +39,24 @@ export function KpiTiles({
   );
 
   const tiles: (Tile & { key: keyof typeof extras })[] = [
-    { key: 'total', label: 'Reseñas analizadas', value: totalReviews, note: `${topics.length} temas detectados` },
+    { key: 'total', label: t('kpi.total'), value: totalReviews, note: t('kpi.topics', { count: topics.length }) },
     {
       key: 'positive',
-      label: 'Clientes satisfechos',
+      label: t('kpi.satisfied'),
       value: unit(share(sentiment.positive)),
-      note: `${sentiment.positive} reseñas positivas`,
+      note: t('kpi.positiveReviews', { count: sentiment.positive }),
     },
     {
       key: 'negative',
-      label: 'Clientes insatisfechos',
+      label: t('kpi.dissatisfied'),
       value: unit(share(sentiment.negative)),
-      note: `${sentiment.negative} reseñas negativas`,
+      note: t('kpi.negativeReviews', { count: sentiment.negative }),
     },
     {
       key: 'complaint',
-      label: 'Principal queja',
-      value: hasComplaint ? topComplaint!.name : 'Sin quejas',
-      note: hasComplaint ? `${topComplaint!.complaintShare.toLocaleString('es-CO')} % de las reseñas` : 'No hay quejas recurrentes',
+      label: t('kpi.complaint'),
+      value: hasComplaint ? topComplaint!.name : t('kpi.noComplaint'),
+      note: hasComplaint ? t('kpi.ofReviews', { share: number(topComplaint!.complaintShare) }) : t('kpi.noComplaintNote'),
       small: true,
     },
   ];
@@ -80,8 +83,9 @@ export function KpiTiles({
 }
 
 export function RecommendationList({ items, topics }: { items: Recommendation[]; topics: TopicStat[] }) {
-  const topicName = new Map(topics.map((t) => [t.key, t.name]));
-  if (items.length === 0) return <p className="text-sm text-ink-2">No se generaron recomendaciones.</p>;
+  const { t, number } = useI18n();
+  const topicName = new Map(topics.map((topic) => [topic.key, topic.name]));
+  if (items.length === 0) return <p className="text-sm text-ink-2">{t('recs.none')}</p>;
 
   return (
     <ol className="-my-4 divide-y divide-line">
@@ -97,7 +101,7 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
                   className={`inline-flex flex-none items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-medium ${p.chip}`}
                 >
                   <Icon name={p.icon} className="h-3 w-3" />
-                  {p.label}
+                  {t(p.label)}
                 </span>
               </div>
               <p className="mt-1 text-sm leading-relaxed text-ink-2">{r.detail}</p>
@@ -109,7 +113,7 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
                       <span className="h-1 w-20 overflow-hidden rounded-full bg-line" aria-hidden>
                         <span className="block h-full rounded-full bg-neg" style={{ width: `${Math.min(100, r.evidenceShare * 2)}%` }} />
                       </span>
-                      <span className="num">Quejas sobre este tema: {r.evidenceShare.toLocaleString('es-CO')} % de las reseñas</span>
+                      <span className="num">{t('recs.evidence', { share: number(r.evidenceShare) })}</span>
                     </span>
                   )}
                 </p>
@@ -123,10 +127,11 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
 }
 
 export function TopicQuotes({ topic }: { topic: TopicStat }) {
+  const { t } = useI18n();
   if (topic.sampleQuotes.length === 0) return null;
   return (
     <div className="rounded-md border border-line bg-raised p-4">
-      <p className="text-sm font-semibold text-ink">Lo que dicen sobre «{topic.name}»</p>
+      <p className="text-sm font-semibold text-ink">{t('topics.quotesTitle', { topic: topic.name })}</p>
       <ul className="mt-2 space-y-2">
         {topic.sampleQuotes.map((q) => (
           <li key={q} className="border-l-2 border-control pl-3 text-sm text-ink-2">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import { REVIEW_SORTS, type ReviewItem, type ReviewSort, type SentimentLabel, type TopicStat } from '../api/types';
+import { useI18n } from '../i18n/I18nContext';
 import { SENTIMENT_META } from './charts';
 import { useConfirm } from './confirm';
 import { Icon } from './icons';
@@ -32,19 +32,26 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
   const [error, setError] = useState<string | null>(null);
   const confirm = useConfirm();
   const toast = useToast();
+  const i18n = useI18n();
+  const { t } = i18n;
 
   async function removeReview(review: ReviewItem) {
     const preview = review.content.length > 90 ? `${review.content.slice(0, 90)}…` : review.content;
-    const ok = await confirm({ title: '¿Eliminar esta reseña?', message: `«${preview}»`, confirmLabel: 'Eliminar', danger: true });
+    const ok = await confirm({
+      title: t('reviews.confirmDelete'),
+      message: `«${preview}»`,
+      confirmLabel: t('common.delete'),
+      danger: true,
+    });
     if (!ok) return;
     try {
       await api.reviews.remove(businessId, review.id);
-      toast.success('Reseña eliminada.');
+      toast.success(t('reviews.deleted'));
       // Si era la última de la página, se vuelve a la anterior.
       if (data && data.items.length === 1 && offset > 0) setOffset(offset - PAGE);
       onChanged?.();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'No se pudo eliminar la reseña');
+      toast.error(i18n.errorMessage(err, 'reviews.deleteError'));
     }
   }
 
@@ -79,7 +86,7 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
         offset,
       })
       .then((d) => !cancelled && setData(d))
-      .catch((e) => !cancelled && setError(e instanceof ApiError ? e.message : 'Error al cargar reseñas'));
+      .catch((e) => !cancelled && setError(i18n.errorMessage(e, 'reviews.loadError')));
     return () => {
       cancelled = true;
     };
@@ -96,12 +103,12 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           maxLength={100}
-          placeholder="Buscar en las reseñas…"
-          aria-label="Buscar en las reseñas"
+          placeholder={t('reviews.search')}
+          aria-label={t('reviews.searchLabel')}
           className={`${selectClass} min-w-48 flex-1`}
         />
         <select
-          aria-label="Filtrar por sentimiento"
+          aria-label={t('reviews.bySentiment')}
           value={sentiment}
           onChange={(e) => {
             setSentiment(e.target.value as SentimentLabel | '');
@@ -109,20 +116,20 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           }}
           className={selectClass}
         >
-          <option value="">Todo sentimiento</option>
+          <option value="">{t('reviews.anySentiment')}</option>
           {(Object.keys(SENTIMENT_META) as SentimentLabel[]).map((s) => (
             <option key={s} value={s}>
-              {SENTIMENT_META[s].plural}
+              {t(SENTIMENT_META[s].plural)}
             </option>
           ))}
         </select>
         <select
-          aria-label="Filtrar por tema"
+          aria-label={t('reviews.byTopic')}
           value={topicFilter ?? ''}
           onChange={(e) => onTopicFilter(e.target.value || null)}
           className={selectClass}
         >
-          <option value="">Todos los temas</option>
+          <option value="">{t('reviews.anyTopic')}</option>
           {topics.map((t) => (
             <option key={t.key} value={t.key}>
               {t.name}
@@ -130,7 +137,7 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           ))}
         </select>
         <select
-          aria-label="Filtrar por estrellas"
+          aria-label={t('reviews.byRating')}
           value={rating}
           onChange={(e) => {
             setRating(e.target.value ? Number(e.target.value) : '');
@@ -138,15 +145,15 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           }}
           className={selectClass}
         >
-          <option value="">Todas las estrellas</option>
+          <option value="">{t('reviews.anyRating')}</option>
           {[5, 4, 3, 2, 1].map((n) => (
             <option key={n} value={n}>
-              {n} {n === 1 ? 'estrella' : 'estrellas'}
+              {i18n.plural('reviews.stars', n)}
             </option>
           ))}
         </select>
         <select
-          aria-label="Ordenar reseñas"
+          aria-label={t('reviews.sortLabel')}
           value={sort}
           onChange={(e) => {
             setSort(e.target.value as ReviewSort);
@@ -155,8 +162,8 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           className={selectClass}
         >
           {REVIEW_SORTS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
+            <option key={o} value={o}>
+              {t(`sort.${o}`)}
             </option>
           ))}
         </select>
@@ -168,7 +175,7 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
           <Spinner />
         </div>
       ) : data.items.length === 0 ? (
-        <p className="py-6 text-center text-sm text-ink-2">No hay reseñas con estos filtros.</p>
+        <p className="py-6 text-center text-sm text-ink-2">{t('reviews.empty')}</p>
       ) : (
         <ul className="divide-y divide-line">
           {data.items.map((r) => (
@@ -179,13 +186,13 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
                   {r.sentiment ? (
                     <span className="inline-flex items-center gap-1.5">
                       <span className={`h-2 w-2 rounded-full ${SENTIMENT_META[r.sentiment].swatch}`} aria-hidden />
-                      {SENTIMENT_META[r.sentiment].label}
+                      {t(SENTIMENT_META[r.sentiment].label)}
                     </span>
                   ) : (
-                    <span className="text-ink-3">Sin analizar</span>
+                    <span className="text-ink-3">{t('reviews.notAnalyzed')}</span>
                   )}
                   {r.rating && (
-                    <span role="img" aria-label={`${r.rating} de 5 estrellas`}>
+                    <span role="img" aria-label={t('reviews.ratingLabel', { count: r.rating })}>
                       {/* Las estrellas son la forma propia del dato (calificación 1-5), no decoración. */}
                       {'★'.repeat(r.rating) /* taste-skill-ignore */}
                       <span className="text-line">{'★'.repeat(5 - r.rating) /* taste-skill-ignore */}</span>
@@ -196,15 +203,15 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
                       {t}
                     </span>
                   ))}
-                  <span className="text-ink-3">{new Date(r.authoredAt ?? r.createdAt).toLocaleDateString('es-CO')}</span>
+                  <span className="text-ink-3">{i18n.date(r.authoredAt ?? r.createdAt)}</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => void removeReview(r)}
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-3 opacity-60 transition hover:bg-critical-soft hover:text-critical focus-visible:opacity-100 group-hover:opacity-100 print:hidden"
-                aria-label="Eliminar reseña"
-                title="Eliminar reseña"
+                aria-label={t('reviews.delete')}
+                title={t('reviews.delete')}
               >
                 <Icon name="trash" />
               </button>
@@ -216,14 +223,14 @@ export function ReviewsTable({ businessId, topics, topicFilter, onTopicFilter, r
       {data && data.total > PAGE && (
         <div className="flex items-center justify-between text-sm text-ink-2">
           <span className="tabular-nums">
-            {offset + 1}–{Math.min(offset + PAGE, data.total)} de {data.total}
+            {t('reviews.range', { from: offset + 1, to: Math.min(offset + PAGE, data.total), total: data.total })}
           </span>
           <div className="flex gap-2">
             <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(offset - PAGE)}>
-              Anterior
+              {t('common.previous')}
             </Button>
             <Button variant="secondary" disabled={offset + PAGE >= data.total} onClick={() => setOffset(offset + PAGE)}>
-              Siguiente
+              {t('common.next')}
             </Button>
           </div>
         </div>

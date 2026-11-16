@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { I18nContext } from '../i18n/I18nContext';
 import { Icon } from './icons';
 import { Button } from './ui';
 
@@ -18,6 +19,8 @@ interface State {
  * componentDidCatch a componentes de clase.
  */
 export class ErrorBoundary extends Component<Props, State> {
+  static override contextType = I18nContext;
+  declare context: React.ContextType<typeof I18nContext>;
   override state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
@@ -35,18 +38,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
   override render(): ReactNode {
     if (!this.state.error) return this.props.children;
+    const { t } = this.context;
     return (
       <div role="alert" className="mx-auto flex max-w-md flex-col items-center py-16 text-center">
         <span className="grid h-14 w-14 place-items-center rounded-lg bg-critical-soft text-critical">
           <Icon name="alert" className="h-7 w-7" />
         </span>
-        <h1 className="mt-5 text-2xl font-bold text-ink">Algo salió mal en esta pantalla</h1>
-        <p className="mt-2 text-sm text-ink-2">Tus datos están a salvo. Recarga la página; si el problema sigue, vuelve al inicio.</p>
+        <h1 className="mt-5 text-2xl font-bold text-ink">{t('boundary.title')}</h1>
+        <p className="mt-2 text-sm text-ink-2">{t('boundary.text')}</p>
         <div className="mt-6 flex gap-2">
           <Button variant="secondary" onClick={() => window.location.assign('/')}>
-            Ir al inicio
+            {t('boundary.home')}
           </Button>
-          <Button onClick={() => window.location.reload()}>Recargar</Button>
+          <Button onClick={() => window.location.reload()}>{t('boundary.reload')}</Button>
         </div>
       </div>
     );

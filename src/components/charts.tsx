@@ -1,5 +1,7 @@
 import { type ReactNode, useState } from 'react';
 import type { InsightReport, SentimentLabel, TopicStat } from '../api/types';
+import { useI18n } from '../i18n/I18nContext';
+import type { MessageKey } from '../i18n/messages';
 
 /**
  * Gráficos del dashboard hechos con HTML/CSS (sin librería): barras finas, extremos redondeados,
@@ -7,10 +9,11 @@ import type { InsightReport, SentimentLabel, TopicStat } from '../api/types';
  * El color nunca es la única pista: cada segmento tiene texto y tooltip.
  */
 
-export const SENTIMENT_META: Record<SentimentLabel, { label: string; plural: string; swatch: string }> = {
-  positive: { label: 'Positiva', plural: 'Positivas', swatch: 'bg-pos' },
-  neutral: { label: 'Neutra', plural: 'Neutras', swatch: 'bg-neu' },
-  negative: { label: 'Negativa', plural: 'Negativas', swatch: 'bg-neg' },
+/** Color de cada sentimiento y las claves de sus etiquetas (el texto sale de i18n). */
+export const SENTIMENT_META: Record<SentimentLabel, { label: MessageKey; plural: MessageKey; swatch: string }> = {
+  positive: { label: 'sentiment.positive', plural: 'sentiment.positive.plural', swatch: 'bg-pos' },
+  neutral: { label: 'sentiment.neutral', plural: 'sentiment.neutral.plural', swatch: 'bg-neu' },
+  negative: { label: 'sentiment.negative', plural: 'sentiment.negative.plural', swatch: 'bg-neg' },
 };
 const ORDER: SentimentLabel[] = ['positive', 'neutral', 'negative'];
 
@@ -48,12 +51,13 @@ function useTooltip() {
 }
 
 export function Legend() {
+  const { t } = useI18n();
   return (
-    <ul className="flex flex-wrap gap-4 text-xs text-ink-2" aria-label="Leyenda">
+    <ul className="flex flex-wrap gap-4 text-xs text-ink-2" aria-label={t('legend.label')}>
       {ORDER.map((s) => (
         <li key={s} className="flex items-center gap-1.5">
           <span className={`h-2.5 w-2.5 rounded-sm ${SENTIMENT_META[s].swatch}`} aria-hidden />
-          {SENTIMENT_META[s].plural}
+          {t(SENTIMENT_META[s].plural)}
         </li>
       ))}
     </ul>
@@ -68,12 +72,13 @@ export function SentimentStrip({
   sentiment: Pick<InsightReport['stats']['sentiment'], SentimentLabel>;
   className?: string;
 }) {
+  const { t, percent } = useI18n();
   const total = sentiment.positive + sentiment.neutral + sentiment.negative;
   const parts = ORDER.filter((s) => sentiment[s] > 0);
   return (
     <span
       role="img"
-      aria-label={parts.map((s) => `${SENTIMENT_META[s].plural} ${pct(sentiment[s], total)} %`).join(', ')}
+      aria-label={parts.map((s) => `${t(SENTIMENT_META[s].plural)} ${percent(pct(sentiment[s], total))}`).join(', ')}
       className={`flex h-1.5 gap-[2px] overflow-hidden rounded-full ${className}`}
     >
       {parts.map((s) => (
@@ -87,6 +92,7 @@ export function SentimentStrip({
 
 export function SentimentBar({ sentiment }: { sentiment: InsightReport['stats']['sentiment'] }) {
   const { bind, node } = useTooltip();
+  const { t, number, percent } = useI18n();
   const total = sentiment.positive + sentiment.neutral + sentiment.negative;
   const segments = ORDER.map((s) => ({ s, count: sentiment[s], share: pct(sentiment[s], total) })).filter((x) => x.count > 0);
 
@@ -95,14 +101,14 @@ export function SentimentBar({ sentiment }: { sentiment: InsightReport['stats'][
       <div
         className="flex h-5 w-full gap-[2px]"
         role="img"
-        aria-label={segments.map((x) => `${SENTIMENT_META[x.s].plural} ${x.share}%`).join(', ')}
+        aria-label={segments.map((x) => `${t(SENTIMENT_META[x.s].plural)} ${percent(x.share)}`).join(', ')}
       >
         {segments.map((x, i) => (
           <div
             key={x.s}
             {...bind(
               <>
-                <strong>{SENTIMENT_META[x.s].plural}</strong>: {x.count} reseñas ({x.share}%)
+                <strong>{t(SENTIMENT_META[x.s].plural)}</strong>: {t('sentimentBar.tooltip', { count: x.count, share: number(x.share) })}
               </>,
             )}
             className={`${SENTIMENT_META[x.s].swatch} h-full outline-offset-1 ${i === 0 ? 'rounded-l' : ''} ${i === segments.length - 1 ? 'rounded-r' : ''}`}
@@ -115,10 +121,10 @@ export function SentimentBar({ sentiment }: { sentiment: InsightReport['stats'][
           <div key={s}>
             <dt className="flex items-center gap-1.5 text-ink-2">
               <span className={`h-2.5 w-2.5 rounded-sm ${SENTIMENT_META[s].swatch}`} aria-hidden />
-              {SENTIMENT_META[s].plural}
+              {t(SENTIMENT_META[s].plural)}
             </dt>
             <dd className="font-semibold tabular-nums text-ink">
-              {pct(sentiment[s], total)}% <span className="font-normal text-ink-3">({sentiment[s]})</span>
+              {percent(pct(sentiment[s], total))} <span className="font-normal text-ink-3">({sentiment[s]})</span>
             </dd>
           </div>
         ))}
@@ -140,6 +146,7 @@ export function TopicChart({
   onSelect: (key: string | null) => void;
 }) {
   const { bind, node } = useTooltip();
+  const i18n = useI18n();
   const max = Math.max(1, ...topics.map((t) => t.mentions));
 
   return (
@@ -160,8 +167,10 @@ export function TopicChart({
                     {t.name}
                   </span>
                   <span className="shrink-0 tabular-nums text-ink-2">
-                    {t.mentions} menciones ·{' '}
-                    <span className={t.complaintShare > 0 ? 'font-semibold text-ink' : ''}>{t.complaintShare}% quejas</span>
+                    {i18n.t('topics.mentions', { count: t.mentions })} ·{' '}
+                    <span className={t.complaintShare > 0 ? 'font-semibold text-ink' : ''}>
+                      {i18n.t('topics.complaints', { share: i18n.number(t.complaintShare) })}
+                    </span>
                   </span>
                 </div>
                 <div className="flex h-2.5 gap-[2px]" style={{ width: `${(t.mentions / max) * 100}%` }}>
@@ -172,7 +181,12 @@ export function TopicChart({
                         <>
                           <strong>{t.name}</strong>
                           <br />
-                          {SENTIMENT_META[s].plural}: {t[s]} de {t.mentions} ({pct(t[s], t.mentions)}%)
+                          {i18n.t('topics.tooltip', {
+                            label: i18n.t(SENTIMENT_META[s].plural),
+                            count: t[s],
+                            total: t.mentions,
+                            share: i18n.number(pct(t[s], t.mentions)),
+                          })}
                         </>,
                       )}
                       className={`${SENTIMENT_META[s].swatch} h-full ${i === 0 ? 'rounded-l' : ''} ${i === arr.length - 1 ? 'rounded-r' : ''}`}
@@ -185,7 +199,7 @@ export function TopicChart({
           );
         })}
       </ul>
-      <p className="text-xs text-ink-3 print:hidden">Haz clic en un tema para filtrar las reseñas.</p>
+      <p className="text-xs text-ink-3 print:hidden">{i18n.t('topics.hint')}</p>
       {node}
     </div>
   );

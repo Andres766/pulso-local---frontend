@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
-import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import type { ImportSummary } from '../api/types';
 import { saveBlob } from '../hooks/exporting';
+import { useI18n } from '../i18n/I18nContext';
 import { buildCsvTemplate } from './csvTemplate';
 import { Icon } from './icons';
 import { useToast } from './toast';
@@ -19,16 +19,18 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const toast = useToast();
+  const i18n = useI18n();
+  const { t } = i18n;
 
   async function submit() {
     setError(null);
     setSummary(null);
     // Validación temprana en el cliente (comodidad); el servidor vuelve a validar todo.
     if (tab === 'csv') {
-      if (!file) return setError('Selecciona un archivo .csv');
-      if (file.size > MAX_FILE_BYTES) return setError('El archivo supera 1 MB');
+      if (!file) return setError(t('import.pickFile'));
+      if (file.size > MAX_FILE_BYTES) return setError(t('import.tooBig'));
     } else if (text.trim().length < 3) {
-      return setError('Pega al menos una reseña');
+      return setError(t('import.pasteOne'));
     }
 
     setBusy(true);
@@ -38,10 +40,10 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
       setText('');
       setFile(null);
       if (fileInput.current) fileInput.current.value = '';
-      toast.success(result.imported === 1 ? '1 reseña importada.' : `${result.imported} reseñas importadas.`);
+      toast.success(i18n.plural('import.done', result.imported));
       onImported();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo importar');
+      setError(i18n.errorMessage(err, 'import.error'));
     } finally {
       setBusy(false);
     }
@@ -54,10 +56,10 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
     <div className="space-y-3">
       <div className="inline-flex rounded-lg bg-raised p-1" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'csv'} className={tabClass(tab === 'csv')} onClick={() => setTab('csv')}>
-          Archivo CSV
+          {t('import.csvTab')}
         </button>
         <button type="button" role="tab" aria-selected={tab === 'text'} className={tabClass(tab === 'text')} onClick={() => setTab('text')}>
-          Pegar texto
+          {t('import.textTab')}
         </button>
       </div>
 
@@ -70,17 +72,14 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="block w-full text-sm text-ink-2 file:mr-3 file:rounded-md file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-ink"
           />
-          <p className="text-xs text-ink-3">
-            Columnas reconocidas: <code>comentario</code> (o texto, reseña), <code>calificacion</code> (1–5) y <code>fecha</code>. Separador
-            coma o punto y coma. Máx. 1 MB.
-          </p>
+          <p className="text-xs text-ink-3">{t('import.columns')}</p>
           <button
             type="button"
-            onClick={() => saveBlob(buildCsvTemplate(), 'plantilla-resenas-pulsolocal.csv')}
+            onClick={() => saveBlob(buildCsvTemplate(i18n.lang), t('import.templateFile'))}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
           >
             <Icon name="download" className="h-3.5 w-3.5" />
-            Descargar plantilla CSV de ejemplo
+            {t('import.template')}
           </button>
         </div>
       ) : (
@@ -89,26 +88,24 @@ export function ImportPanel({ businessId, onImported }: { businessId: string; on
           onChange={(e) => setText(e.target.value)}
           rows={6}
           maxLength={200_000}
-          placeholder={'Una reseña por línea, por ejemplo:\nEl café muy rico pero se demoraron mucho\nExcelente atención, volveré'}
+          placeholder={t('import.placeholder')}
           className="w-full rounded-lg border border-line bg-card p-3 text-sm text-ink placeholder:text-ink-3 focus:border-brand focus:outline-none"
         />
       )}
 
       <Button onClick={submit} loading={busy}>
-        Importar reseñas
+        {t('import.submit')}
       </Button>
 
       {error && <Alert>{error}</Alert>}
       {summary && (
         <Alert tone="success">
-          Se importaron <strong>{summary.imported}</strong> de {summary.received} reseñas
-          {summary.duplicates > 0 && ` · ${summary.duplicates} duplicadas omitidas`}
+          {t('import.summary', { imported: summary.imported, received: summary.received })}
+          {summary.duplicates > 0 && t('import.duplicates', { count: summary.duplicates })}
           {summary.rejected.length > 0 && (
             <ul className="mt-1 list-disc pl-4 text-xs text-ink-2">
               {summary.rejected.slice(0, 5).map((r) => (
-                <li key={r.row}>
-                  Fila {r.row}: {r.reason}
-                </li>
+                <li key={r.row}>{t('import.row', { row: r.row, reason: r.reason })}</li>
               ))}
             </ul>
           )}

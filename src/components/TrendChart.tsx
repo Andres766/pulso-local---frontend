@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/services';
 import type { MonthlySentiment, SentimentLabel } from '../api/types';
+import { useI18n } from '../i18n/I18nContext';
 import { SENTIMENT_META } from './charts';
 import { Skeleton } from './ui';
 
 const ORDER: SentimentLabel[] = ['negative', 'neutral', 'positive']; // de abajo hacia arriba
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-/** "2026-08" → "ago 26" (formato corto y estable, sin depender de la configuración regional). */
-const monthLabel = (m: string) => {
-  const [y, mm] = m.split('-');
-  return `${MONTHS[Number(mm) - 1] ?? mm} ${String(y).slice(2)}`;
-};
+/** "2026-08" → "ago 26" / "Aug 26": mes corto en el idioma de la interfaz y año de dos cifras. */
+export function monthLabel(month: string, locale: string): string {
+  const [y, mm] = month.split('-').map(Number);
+  if (!y || !mm) return month;
+  const name = new Date(y, mm - 1, 1).toLocaleDateString(locale, { month: 'short' }).replace('.', '');
+  return `${name} ${String(y).slice(2)}`;
+}
 
 /** Escala redonda con 3-5 marcas y la superior por encima del máximo (las columnas nunca tocan el borde). */
 export function scale(max: number): { top: number; ticks: number[] } {
@@ -27,6 +29,7 @@ export function scale(max: number): { top: number; ticks: number[] } {
  */
 export function TrendChart({ businessId, refreshKey }: { businessId: string; refreshKey: number }) {
   const [points, setPoints] = useState<MonthlySentiment[] | null>(null);
+  const { t, locale } = useI18n();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey es un disparador: se recarga tras cada análisis
   useEffect(() => {
@@ -41,7 +44,7 @@ export function TrendChart({ businessId, refreshKey }: { businessId: string; ref
   }, [businessId, refreshKey]);
 
   if (points === null) return <Skeleton className="h-56" />;
-  if (points.length === 0) return <p className="text-sm text-ink-2">Aún no hay suficientes datos con fecha para mostrar una tendencia.</p>;
+  if (points.length === 0) return <p className="text-sm text-ink-2">{t('trend.empty')}</p>;
 
   const { top, ticks } = scale(Math.max(1, ...points.map((p) => p.total)));
 
@@ -59,7 +62,12 @@ export function TrendChart({ businessId, refreshKey }: { businessId: string; ref
             <div
               key={p.month}
               className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
-              title={`${monthLabel(p.month)}: ${p.positive} positivas, ${p.neutral} neutras, ${p.negative} negativas`}
+              title={t('trend.barTitle', {
+                month: monthLabel(p.month, locale),
+                positive: p.positive,
+                neutral: p.neutral,
+                negative: p.negative,
+              })}
             >
               <span className="num mb-1 text-xs font-medium text-ink-2">{p.total > 0 ? p.total : ''}</span>
               <div className="flex w-full max-w-14 flex-col-reverse gap-[2px]" style={{ height: `${(p.total / top) * 100}%` }}>
@@ -78,27 +86,27 @@ export function TrendChart({ businessId, refreshKey }: { businessId: string; ref
       <div className="mt-1.5 flex gap-2 pl-8 sm:gap-4" aria-hidden>
         {points.map((p) => (
           <span key={p.month} className="min-w-0 flex-1 truncate text-center text-xs text-ink-3">
-            {monthLabel(p.month)}
+            {monthLabel(p.month, locale)}
           </span>
         ))}
       </div>
 
       <details className="mt-4 text-sm">
-        <summary className="cursor-pointer text-ink-2 hover:text-ink">Ver como tabla</summary>
+        <summary className="cursor-pointer text-ink-2 hover:text-ink">{t('trend.asTable')}</summary>
         <table className="mt-2 w-full text-left tabular-nums">
-          <caption className="sr-only">Reseñas por mes y sentimiento</caption>
+          <caption className="sr-only">{t('trend.caption')}</caption>
           <thead className="text-xs text-ink-3">
             <tr>
               <th scope="col" className="py-1">
-                Mes
+                {t('trend.month')}
               </th>
               {(['positive', 'neutral', 'negative'] as const).map((s) => (
                 <th key={s} scope="col" className="py-1 text-right">
-                  {SENTIMENT_META[s].plural}
+                  {t(SENTIMENT_META[s].plural)}
                 </th>
               ))}
               <th scope="col" className="py-1 text-right">
-                Total
+                {t('trend.total')}
               </th>
             </tr>
           </thead>
@@ -106,7 +114,7 @@ export function TrendChart({ businessId, refreshKey }: { businessId: string; ref
             {points.map((p) => (
               <tr key={p.month}>
                 <th scope="row" className="py-1 font-medium">
-                  {monthLabel(p.month)}
+                  {monthLabel(p.month, locale)}
                 </th>
                 <td className="py-1 text-right">{p.positive}</td>
                 <td className="py-1 text-right">{p.neutral}</td>

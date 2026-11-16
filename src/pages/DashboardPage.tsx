@@ -1,16 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { ApiError } from '../api/http';
 import { describeProvider } from '../api/providers';
 import { api } from '../api/services';
-import {
-  type AnalysisRun,
-  categoryLabel,
-  type Dashboard,
-  type InsightComparison,
-  type InsightReport,
-  MAX_ANALYSIS_ATTEMPTS,
-} from '../api/types';
+import { type AnalysisRun, type Dashboard, type InsightComparison, type InsightReport, MAX_ANALYSIS_ATTEMPTS } from '../api/types';
 import { BusinessSettings } from '../components/BusinessSettings';
 import { Legend, SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
@@ -24,12 +16,12 @@ import { Alert, Button, Card, EmptyState, Skeleton, Spinner } from '../component
 import { printReport, saveBlob } from '../hooks/exporting';
 import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
 import { usePageTitle } from '../hooks/usePageTitle';
-
-export const formatDate = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+import { useI18n } from '../i18n/I18nContext';
 
 function DashboardSkeleton() {
+  const { t } = useI18n();
   return (
-    <div className="space-y-6" role="status" aria-label="Cargando dashboard">
+    <div className="space-y-6" role="status" aria-label={t('dashboard.loading')}>
       <Skeleton className="h-24" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
@@ -44,30 +36,34 @@ function DashboardSkeleton() {
   );
 }
 
-const pts = (n: number) => `${n.toLocaleString('es-CO', { maximumFractionDigits: 1 })} ${Math.abs(n) === 1 ? 'punto' : 'puntos'}`;
-
 /** El hallazgo del último análisis en una frase: la queja que más pesa y cómo cambió. */
 function Finding({ report, comparison }: { report: InsightReport; comparison: InsightComparison | null }) {
+  const { t, plural, number } = useI18n();
   const top = [...report.stats.topics].sort((a, b) => b.complaintShare - a.complaintShare)[0];
   if (!top || top.complaintShare === 0) {
-    return <p className="text-base text-ink">Ningún tema acumula quejas en este análisis.</p>;
+    return <p className="text-base text-ink">{t('dashboard.findingNone')}</p>;
   }
-  const delta = comparison?.topics.find((t) => t.key === top.key)?.complaintDelta ?? null;
+  const delta = comparison?.topics.find((topic) => topic.key === top.key)?.complaintDelta ?? null;
   let change = '';
   if (delta !== null) {
-    if (Math.abs(delta) < 0.05) change = ', igual que en el análisis anterior';
-    else change = `, ${pts(Math.abs(delta))} ${delta < 0 ? 'menos' : 'más'} que en el análisis anterior`;
+    const points = plural('dashboard.point', Math.abs(delta) === 1 ? 1 : 2, { n: number(Math.abs(delta)) });
+    if (Math.abs(delta) < 0.05) change = t('dashboard.findingSame');
+    else change = t(delta < 0 ? 'dashboard.findingLess' : 'dashboard.findingMore', { points });
   }
   return (
     <p className="max-w-3xl text-base text-ink">
-      La queja que más se repite es <strong className="font-semibold">{top.name.toLowerCase()}</strong>:{' '}
-      <span className="num">{top.complaintShare.toLocaleString('es-CO')} %</span> de las reseñas{change}.
+      {t('dashboard.findingLead')}
+      <strong className="font-semibold">{top.name.toLowerCase()}</strong>:{' '}
+      <span className="num">{t('dashboard.findingShare', { share: number(top.complaintShare) })}</span>
+      {t('dashboard.findingRest', { change })}
     </p>
   );
 }
 
 export function DashboardPage() {
   const { id = '' } = useParams();
+  const i18n = useI18n();
+  const { t } = i18n;
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -75,14 +71,15 @@ export function DashboardPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [editing, setEditing] = useState(false);
-  usePageTitle(dashboard?.business.name ?? 'Dashboard');
+  usePageTitle(dashboard?.business.name ?? t('dashboard.title'));
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: el mensaje de error se traduce al mostrarlo; recargar por cambio de idioma no aporta
   const load = useCallback(async () => {
     try {
       setDashboard(await api.businesses.dashboard(id));
       setRefreshKey((k) => k + 1);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo cargar el dashboard');
+      setError(i18n.errorMessage(err, 'dashboard.loadError'));
     }
   }, [id]);
 
@@ -95,8 +92,8 @@ export function DashboardPage() {
   useAnalysisPolling(running, {
     onProgress: (current) => setDashboard((d) => (d ? { ...d, latestRun: current } : d)),
     onFinished: (finished) => {
-      if (finished.status === 'completed') toast.success('Análisis completado: el reporte ya está actualizado.');
-      else toast.error('El análisis no se pudo completar.');
+      if (finished.status === 'completed') toast.success(t('dashboard.completed'));
+      else toast.error(t('dashboard.failedToast'));
       void load();
     },
   });
@@ -108,9 +105,9 @@ export function DashboardPage() {
     try {
       const run: AnalysisRun = await api.analyses.start(id);
       setDashboard((d) => (d ? { ...d, latestRun: run } : d));
-      toast.info('Análisis en cola: te avisamos cuando termine.');
+      toast.info(t('dashboard.queued'));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo iniciar el análisis');
+      setError(i18n.errorMessage(err, 'dashboard.startError'));
     } finally {
       setStarting(false);
     }
@@ -122,9 +119,9 @@ export function DashboardPage() {
     try {
       const { blob, filename } = await api.reviews.exportCsv(id);
       saveBlob(blob, filename ?? 'resenas.csv');
-      toast.success('CSV descargado.');
+      toast.success(t('dashboard.csvDone'));
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'No se pudo exportar');
+      toast.error(i18n.errorMessage(err, 'dashboard.exportError'));
     } finally {
       setExporting(false);
     }
@@ -134,23 +131,20 @@ export function DashboardPage() {
   if (!dashboard) return <Alert>{error}</Alert>;
 
   const { business, report, latestRun, reportRun } = dashboard;
-  const selectedTopic = report?.stats.topics.find((t) => t.key === topicFilter) ?? null;
+  const selectedTopic = report?.stats.topics.find((topic) => topic.key === topicFilter) ?? null;
   const usesLlm = reportRun ? describeProvider(reportRun.provider).isLlm : false;
   const comparison = dashboard.comparison;
   const topComplaintKey = report ? [...report.stats.topics].sort((a, b) => b.complaintShare - a.complaintShare)[0]?.key : undefined;
-  const topComplaintChange = comparison?.topics.find((t) => t.key === topComplaintKey);
+  const topComplaintChange = comparison?.topics.find((topic) => topic.key === topComplaintKey);
+  const provider = reportRun && (usesLlm ? describeProvider(reportRun.provider).name : t('provider.lexiconLong'));
 
   const importCard = (
-    <Card
-      title="Cargar reseñas"
-      subtitle="De Google Maps, Instagram, WhatsApp o tu buzón de sugerencias"
-      className="lg:col-span-2 print:hidden"
-    >
+    <Card title={t('import.title')} subtitle={t('import.subtitle')} className="lg:col-span-2 print:hidden">
       <ImportPanel businessId={business.id} onImported={() => void load()} />
     </Card>
   );
   const reviewsCard = (
-    <Card title="Reseñas" subtitle={selectedTopic ? `Filtrando por «${selectedTopic.name}»` : 'Todas las reseñas del negocio'}>
+    <Card title={t('reviews.title')} subtitle={selectedTopic ? t('reviews.filteringBy', { topic: selectedTopic.name }) : t('reviews.all')}>
       {selectedTopic && (
         <div className="mb-4">
           <TopicQuotes topic={selectedTopic} />
@@ -171,23 +165,22 @@ export function DashboardPage() {
     <div className="space-y-4">
       {/* Encabezado que solo aparece en el reporte impreso / PDF */}
       <div className="hidden border-line border-b pb-4 print:block">
-        <p className="text-sm font-semibold text-ink">Reporte de PulsoLocal</p>
-        <p className="text-sm text-ink-2">Generado el {new Date().toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}</p>
+        <p className="text-sm font-semibold text-ink">{t('dashboard.printTitle')}</p>
+        <p className="text-sm text-ink-2">{t('dashboard.printDate', { date: i18n.dateTime(new Date(), 'long') })}</p>
       </div>
 
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <Link to="/" className="inline-flex items-center gap-1 text-sm text-ink-2 hover:text-ink print:hidden">
-            <Icon name="chevronLeft" className="h-4 w-4" /> Mis negocios
+            <Icon name="chevronLeft" className="h-4 w-4" /> {t('dashboard.back')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-ink">{business.name}</h1>
           <p className="mt-1 text-sm text-ink-2">
             {[
-              categoryLabel(business.category),
+              t(`category.${business.category}`),
               business.city,
-              `${dashboard.reviewCount} reseñas`,
-              reportRun?.finishedAt &&
-                `analizado con ${usesLlm ? describeProvider(reportRun.provider).name : 'el léxico local'} el ${formatDate(reportRun.finishedAt)}`,
+              t('dashboard.reviewsCount', { count: dashboard.reviewCount }),
+              reportRun?.finishedAt && t('dashboard.analyzedWith', { provider: provider ?? '', date: i18n.dateTime(reportRun.finishedAt) }),
             ]
               .filter(Boolean)
               .join(' · ')}
@@ -195,16 +188,16 @@ export function DashboardPage() {
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
           <Button variant="ghost" icon="tag" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
-            Editar
+            {t('dashboard.edit')}
           </Button>
           <Button variant="secondary" icon="download" onClick={exportCsv} loading={exporting} disabled={dashboard.reviewCount === 0}>
-            CSV
+            {t('dashboard.csv')}
           </Button>
           <Button variant="secondary" icon="printer" onClick={printReport} disabled={!report}>
-            Reporte PDF
+            {t('dashboard.pdf')}
           </Button>
           <Button onClick={startAnalysis} icon="sparkles" loading={starting || Boolean(running)} disabled={dashboard.reviewCount === 0}>
-            {running ? 'Analizando…' : report ? 'Volver a analizar' : 'Analizar con IA'}
+            {running ? t('dashboard.analyzing') : report ? t('dashboard.reanalyze') : t('dashboard.analyze')}
           </Button>
         </div>
       </header>
@@ -225,12 +218,12 @@ export function DashboardPage() {
           <span className="inline-flex items-center gap-2">
             <Spinner className="h-4 w-4" />
             {retrying
-              ? `El servicio de IA estaba ocupado: se reintentará en unos segundos (intento ${running.attempts + 1} de ${MAX_ANALYSIS_ATTEMPTS}). ${running.error ?? ''}`
-              : `La IA está leyendo ${running.reviewCount} reseñas: detecta temas, clasifica el sentimiento y redacta recomendaciones…`}
+              ? t('dashboard.retrying', { attempt: running.attempts + 1, max: MAX_ANALYSIS_ATTEMPTS, reason: running.error ?? '' })
+              : t('dashboard.running', { count: running.reviewCount })}
           </span>
         </Alert>
       )}
-      {latestRun?.status === 'failed' && <Alert>El último análisis falló: {latestRun.error}</Alert>}
+      {latestRun?.status === 'failed' && <Alert>{t('dashboard.lastFailed', { error: latestRun.error ?? '' })}</Alert>}
 
       {report ? (
         <>
@@ -239,7 +232,7 @@ export function DashboardPage() {
             extras={
               comparison
                 ? {
-                    total: <span className="text-xs text-ink-3">Antes: {comparison.previousTotalReviews} reseñas</span>,
+                    total: <span className="text-xs text-ink-3">{t('kpi.before', { count: comparison.previousTotalReviews })}</span>,
                     positive: <Delta value={comparison.positiveShareDelta} goodWhen="up" />,
                     negative: <Delta value={comparison.negativeShareDelta} goodWhen="down" />,
                     complaint:
@@ -252,37 +245,27 @@ export function DashboardPage() {
           />
 
           <div className="grid gap-4 lg:grid-cols-5">
-            <Card
-              title="Recomendaciones para tu negocio"
-              subtitle={
-                usesLlm
-                  ? 'Redactadas por IA a partir de las cifras reales de tus reseñas'
-                  : 'Generadas con plantillas del analizador local (configura la IA para recomendaciones a la medida)'
-              }
-              className="lg:col-span-3"
-            >
+            <Card title={t('recs.title')} subtitle={usesLlm ? t('recs.byAi') : t('recs.byTemplates')} className="lg:col-span-3">
               <RecommendationList items={report.recommendations} topics={report.stats.topics} />
             </Card>
             <div className="space-y-4 lg:col-span-2">
               <Card
-                title="Sentimiento general"
-                subtitle={`${report.stats.totalReviews} reseñas · puntaje promedio ${report.stats.sentiment.averageScore} (de −1 a 1)`}
+                title={t('sentimentCard.title')}
+                subtitle={t('sentimentCard.subtitle', {
+                  count: report.stats.totalReviews,
+                  score: i18n.number(report.stats.sentiment.averageScore, 2),
+                })}
               >
                 <SentimentBar sentiment={report.stats.sentiment} />
               </Card>
-              <Card title="Temas recurrentes" subtitle="Menciones por tema y su sentimiento">
+              <Card title={t('topics.title')} subtitle={t('topics.subtitle')}>
                 <TopicChart topics={report.stats.topics} selected={topicFilter} onSelect={setTopicFilter} />
               </Card>
             </div>
           </div>
 
           <div className="grid items-start gap-4 lg:grid-cols-5">
-            <Card
-              title="Sentimiento por mes"
-              subtitle="Reseñas según el mes en que se escribieron"
-              action={<Legend />}
-              className="lg:col-span-3"
-            >
+            <Card title={t('trend.title')} subtitle={t('trend.subtitle')} action={<Legend />} className="lg:col-span-3">
               <TrendChart businessId={business.id} refreshKey={refreshKey} />
             </Card>
             {importCard}
@@ -290,34 +273,25 @@ export function DashboardPage() {
 
           <div className="grid items-start gap-4 lg:grid-cols-5">
             <Card
-              title="Evolución desde el análisis anterior"
+              title={t('evolution.title')}
               subtitle={
                 dashboard.previousRun
-                  ? `Comparado con el análisis del ${formatDate(dashboard.previousRun.createdAt)}`
-                  : 'Aparece cuando tengas al menos dos análisis'
+                  ? t('evolution.comparedWith', { date: i18n.dateTime(dashboard.previousRun.createdAt) })
+                  : t('evolution.needsTwo')
               }
               className="lg:col-span-3"
             >
-              {comparison ? (
-                <TopicEvolution comparison={comparison} />
-              ) : (
-                <p className="text-sm text-ink-2">
-                  Carga las reseñas nuevas de las próximas semanas y vuelve a analizar: aquí verás si las quejas bajan o suben después de
-                  aplicar las recomendaciones.
-                </p>
-              )}
+              {comparison ? <TopicEvolution comparison={comparison} /> : <p className="text-sm text-ink-2">{t('evolution.emptyText')}</p>}
             </Card>
-            <Card title="Historial de análisis" className="lg:col-span-2 print:hidden">
+            <Card title={t('history.title')} className="lg:col-span-2 print:hidden">
               <AnalysisHistory runs={dashboard.history} currentId={reportRun?.id ?? null} />
             </Card>
           </div>
         </>
       ) : (
         !running && (
-          <EmptyState icon="sparkles" title={dashboard.reviewCount > 0 ? 'Listo para tu primer análisis' : 'Empieza cargando reseñas'}>
-            {dashboard.reviewCount > 0
-              ? 'Ya tienes reseñas cargadas. Pulsa «Analizar con IA» para generar tu reporte.'
-              : 'Sube un CSV o pega las reseñas de tus clientes en el panel de abajo.'}
+          <EmptyState icon="sparkles" title={dashboard.reviewCount > 0 ? t('dashboard.readyTitle') : t('dashboard.startTitle')}>
+            {dashboard.reviewCount > 0 ? t('dashboard.readyText') : t('dashboard.startText')}
           </EmptyState>
         )
       )}

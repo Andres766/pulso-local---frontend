@@ -1,13 +1,13 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { ApiError } from '../api/http';
 import { api } from '../api/services';
-import { BUSINESS_CATEGORIES, type BusinessCategory, type BusinessPulse, categoryLabel } from '../api/types';
+import { BUSINESS_CATEGORIES, type BusinessCategory, type BusinessPulse } from '../api/types';
 import { SentimentStrip } from '../components/charts';
 import { Delta } from '../components/evolution';
 import { Icon } from '../components/icons';
 import { Alert, Button, Card, EmptyState, Field, Select, Skeleton } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { type I18n, useI18n } from '../i18n/I18nContext';
 
 /** Tintes pálidos de identidad (no son datos): cada negocio conserva el suyo en la lista. */
 const IDENTITY = [
@@ -20,9 +20,9 @@ const IDENTITY = [
 ];
 const identityOf = (id: string) => IDENTITY[[...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % IDENTITY.length];
 
-const relative = new Intl.RelativeTimeFormat('es-CO', { numeric: 'auto' });
-/** "hace 3 horas", "ayer", "hace 2 semanas". */
-export function timeAgo(iso: string, now = Date.now()): string {
+/** "hace 3 horas", "ayer", "hace 2 semanas" (o su versión en inglés). */
+export function timeAgo(iso: string, locale: string, now = Date.now()): string {
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const minutes = Math.round((new Date(iso).getTime() - now) / 60_000);
   if (Math.abs(minutes) < 60) return relative.format(minutes, 'minute');
   const hours = Math.round(minutes / 60);
@@ -35,15 +35,15 @@ export function timeAgo(iso: string, now = Date.now()): string {
 const share = (part: number, total: number) => (total === 0 ? 0 : Math.round((part / total) * 100));
 
 /** El negocio que más necesita atención: el de mayor proporción de reseñas negativas. */
-export function portfolioFinding(items: BusinessPulse[]): string | null {
+export function portfolioFinding(items: BusinessPulse[], { t }: Pick<I18n, 't'>): string | null {
   const analyzed = items.filter((p) => p.sentiment && p.analyzedReviews > 0);
   if (analyzed.length < 2) return null;
   const negativeShare = (p: BusinessPulse) => (p.sentiment?.negative ?? 0) / p.analyzedReviews;
   const worst = [...analyzed].sort((a, b) => negativeShare(b) - negativeShare(a))[0];
   if (!worst) return null;
   const negative = share(worst.sentiment?.negative ?? 0, worst.analyzedReviews);
-  const complaint = worst.topComplaint ? `, sobre todo por ${worst.topComplaint.name.toLowerCase()}` : '';
-  return `${worst.business.name} es el negocio con más clientes insatisfechos: ${negative} % de sus reseñas son negativas${complaint}.`;
+  const complaint = worst.topComplaint ? t('businesses.findingComplaint', { topic: worst.topComplaint.name.toLowerCase() }) : '';
+  return t('businesses.finding', { name: worst.business.name, share: negative, complaint });
 }
 
 const COLUMNS = 'md:grid-cols-[2.25rem_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)_5.5rem_1rem]';
@@ -51,6 +51,7 @@ const COLUMNS = 'md:grid-cols-[2.25rem_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.
 function PulseRow({ pulse }: { pulse: BusinessPulse }) {
   const { business: b, sentiment, analyzedReviews, topComplaint } = pulse;
   const running = pulse.latestStatus === 'pending' || pulse.latestStatus === 'running';
+  const { t, number, locale } = useI18n();
 
   return (
     <li>
@@ -63,7 +64,7 @@ function PulseRow({ pulse }: { pulse: BusinessPulse }) {
         </span>
         <span className="min-w-0">
           <span className="block font-semibold text-ink md:truncate">{b.name}</span>
-          <span className="block truncate text-sm text-ink-2">{[categoryLabel(b.category), b.city].filter(Boolean).join(' · ')}</span>
+          <span className="block truncate text-sm text-ink-2">{[t(`category.${b.category}`), b.city].filter(Boolean).join(' · ')}</span>
         </span>
 
         {/* En el teléfono, sentimiento y queja pasan a líneas propias debajo del nombre. */}
@@ -71,13 +72,15 @@ function PulseRow({ pulse }: { pulse: BusinessPulse }) {
           {sentiment ? (
             <>
               <span className="flex flex-wrap items-baseline gap-x-2 text-sm">
-                <span className="num font-medium text-ink">{share(sentiment.positive, analyzedReviews)} % satisfechos</span>
+                <span className="num font-medium text-ink">
+                  {t('businesses.satisfied', { share: share(sentiment.positive, analyzedReviews) })}
+                </span>
                 {pulse.positiveShareDelta !== null && <Delta value={pulse.positiveShareDelta} goodWhen="up" label="" />}
               </span>
               <SentimentStrip sentiment={sentiment} className="mt-1.5 max-w-44" />
             </>
           ) : (
-            <span className="text-sm text-ink-3">{running ? 'Analizando…' : 'Sin analizar'}</span>
+            <span className="text-sm text-ink-3">{running ? t('businesses.analyzing') : t('businesses.notAnalyzed')}</span>
           )}
         </span>
 
@@ -85,16 +88,18 @@ function PulseRow({ pulse }: { pulse: BusinessPulse }) {
           {topComplaint ? (
             <>
               <span className="block truncate text-ink">{topComplaint.name}</span>
-              <span className="num block text-ink-3">{topComplaint.complaintShare.toLocaleString('es-CO')} % de las reseñas</span>
+              <span className="num block text-ink-3">{t('businesses.ofReviews', { share: number(topComplaint.complaintShare) })}</span>
             </>
           ) : (
-            <span className="text-ink-3">{sentiment ? 'Sin quejas recurrentes' : '—'}</span>
+            <span className="text-ink-3">{sentiment ? t('businesses.noComplaints') : '—'}</span>
           )}
         </span>
 
         <span className="col-start-3 row-start-1 text-right text-sm md:col-auto md:row-auto">
           <span className="num block font-medium text-ink">{pulse.reviewCount}</span>
-          <span className="block whitespace-nowrap text-xs text-ink-3">{pulse.analyzedAt ? timeAgo(pulse.analyzedAt) : 'reseñas'}</span>
+          <span className="block whitespace-nowrap text-xs text-ink-3">
+            {pulse.analyzedAt ? timeAgo(pulse.analyzedAt, locale) : t('businesses.reviewsUnit')}
+          </span>
         </span>
         <Icon
           name="chevronRight"
@@ -114,14 +119,17 @@ export function BusinessesPage() {
     city: '',
   });
   const [saving, setSaving] = useState(false);
-  usePageTitle('Mis negocios');
+  const i18n = useI18n();
+  const { t } = i18n;
+  usePageTitle(t('businesses.title'));
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: el error se traduce al mostrarlo; cambiar de idioma no debe recargar la lista
   const load = useCallback(
     () =>
       api.businesses
         .overview()
         .then(setItems)
-        .catch((e) => setError(e instanceof ApiError ? e.message : 'Error al cargar')),
+        .catch((e) => setError(i18n.errorMessage(e, 'businesses.loadError'))),
     [],
   );
 
@@ -138,25 +146,25 @@ export function BusinessesPage() {
       setForm({ ...form, name: '', city: '' });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo crear el negocio');
+      setError(i18n.errorMessage(err, 'businesses.createError'));
     } finally {
       setSaving(false);
     }
   }
 
   const totalReviews = items?.reduce((n, p) => n + p.reviewCount, 0) ?? 0;
-  const finding = items ? portfolioFinding(items) : null;
+  const finding = items ? portfolioFinding(items, i18n) : null;
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-ink">Mis negocios</h1>
+        <h1 className="text-2xl font-bold text-ink">{t('businesses.title')}</h1>
         <p className="mt-1 text-sm text-ink-2">
           {items === null
-            ? 'Cargando tus negocios…'
+            ? t('businesses.loading')
             : items.length === 0
-              ? 'Registra tu primer negocio para empezar.'
-              : `${items.length} ${items.length === 1 ? 'negocio' : 'negocios'} · ${totalReviews} reseñas cargadas`}
+              ? t('businesses.none')
+              : i18n.plural('businesses.summary', items.length, { reviews: i18n.number(totalReviews, 0) })}
         </p>
       </div>
       {finding && <p className="max-w-3xl text-base text-ink">{finding}</p>}
@@ -165,29 +173,33 @@ export function BusinessesPage() {
 
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_320px]">
         {items === null ? (
-          <div className="space-y-px overflow-hidden rounded-lg border border-line bg-card" role="status" aria-label="Cargando negocios">
+          <div
+            className="space-y-px overflow-hidden rounded-lg border border-line bg-card"
+            role="status"
+            aria-label={t('businesses.loadingList')}
+          >
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-16 rounded-none" />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <EmptyState icon="store" title="Todavía no tienes negocios">
-            Crea el primero con el formulario y luego carga sus reseñas.
+          <EmptyState icon="store" title={t('businesses.emptyTitle')}>
+            {t('businesses.emptyText')}
           </EmptyState>
         ) : (
           <section className="overflow-hidden rounded-lg border border-line bg-card" aria-labelledby="pulso-titulo">
             <div className="flex items-baseline justify-between gap-4 px-5 pt-4 pb-3">
               <h2 id="pulso-titulo" className="text-base font-semibold text-ink">
-                Pulso de cada negocio
+                {t('businesses.pulseTitle')}
               </h2>
-              <span className="hidden text-xs text-ink-3 sm:inline">Según su último análisis</span>
+              <span className="hidden text-xs text-ink-3 sm:inline">{t('businesses.pulseNote')}</span>
             </div>
             <div className={`hidden gap-x-3 border-line border-b px-5 pb-2 text-xs text-ink-3 md:grid ${COLUMNS}`} aria-hidden>
               <span />
-              <span>Negocio</span>
-              <span>Sentimiento</span>
-              <span>Principal queja</span>
-              <span className="text-right">Reseñas</span>
+              <span>{t('businesses.colBusiness')}</span>
+              <span>{t('businesses.colSentiment')}</span>
+              <span>{t('businesses.colComplaint')}</span>
+              <span className="text-right">{t('businesses.colReviews')}</span>
               <span />
             </div>
             <ul className="divide-y divide-line">
@@ -198,37 +210,37 @@ export function BusinessesPage() {
           </section>
         )}
 
-        <Card title="Nuevo negocio" subtitle="Luego carga sus reseñas desde un CSV o pegándolas.">
+        <Card title={t('businesses.newTitle')} subtitle={t('businesses.newSubtitle')}>
           <form onSubmit={onCreate} className="space-y-4">
             <Field
-              label="Nombre"
+              label={t('common.name')}
               required
               minLength={2}
               maxLength={120}
-              placeholder="Ej. Café Galeras"
+              placeholder={t('businesses.namePlaceholder')}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             <Select
-              label="Categoría"
+              label={t('common.category')}
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value as BusinessCategory })}
             >
               {BUSINESS_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
+                <option key={c} value={c}>
+                  {t(`category.${c}`)}
                 </option>
               ))}
             </Select>
             <Field
-              label="Ciudad (opcional)"
+              label={t('common.cityOptional')}
               maxLength={80}
-              placeholder="Ej. Pasto"
+              placeholder={t('businesses.cityPlaceholder')}
               value={form.city}
               onChange={(e) => setForm({ ...form, city: e.target.value })}
             />
             <Button type="submit" loading={saving} icon="plus" className="w-full">
-              Crear negocio
+              {t('businesses.create')}
             </Button>
           </form>
         </Card>

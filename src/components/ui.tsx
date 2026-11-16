@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { Icon, type IconName } from './icons';
 
 /** Primitivas de UI reutilizables. Todo el texto lo escapa React (no se usa dangerouslySetInnerHTML). */
@@ -130,8 +131,9 @@ export function Skeleton({ className = '' }: { className?: string }) {
 }
 
 export function FullPageSpinner() {
+  const { t } = useI18n();
   return (
-    <div className="grid min-h-screen place-items-center text-ink-3" role="status" aria-label="Cargando">
+    <div className="grid min-h-screen place-items-center text-ink-3" role="status" aria-label={t('common.loading')}>
       <Spinner className="h-8 w-8" />
     </div>
   );

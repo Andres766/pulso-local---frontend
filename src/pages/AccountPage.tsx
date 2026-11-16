@@ -1,6 +1,5 @@
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import { useAuth } from '../auth/AuthContext';
 import { useConfirm } from '../components/confirm';
@@ -8,15 +7,16 @@ import { PasswordChecklist } from '../components/PasswordChecklist';
 import { useToast } from '../components/toast';
 import { Alert, Button, Card, Field } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
-
-const DELETE_WORD = 'ELIMINAR';
+import { useI18n } from '../i18n/I18nContext';
 
 export function AccountPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const toast = useToast();
-  usePageTitle('Mi cuenta');
+  const i18n = useI18n();
+  const { t } = i18n;
+  usePageTitle(t('account.title'));
 
   const [pwd, setPwd] = useState({ current: '', next: '', repeat: '' });
   const [pwdError, setPwdError] = useState<string | null>(null);
@@ -29,14 +29,14 @@ export function AccountPage() {
   async function changePassword(e: FormEvent) {
     e.preventDefault();
     setPwdError(null);
-    if (pwd.next !== pwd.repeat) return setPwdError('Las contraseñas nuevas no coinciden');
+    if (pwd.next !== pwd.repeat) return setPwdError(t('account.mismatch'));
     setSavingPwd(true);
     try {
       await api.auth.changePassword(pwd.current, pwd.next);
       setPwd({ current: '', next: '', repeat: '' });
-      toast.success('Contraseña actualizada. Las demás sesiones se cerraron.');
+      toast.success(t('account.pwdDone'));
     } catch (err) {
-      setPwdError(err instanceof ApiError ? err.message : 'No se pudo cambiar la contraseña');
+      setPwdError(i18n.errorMessage(err, 'account.pwdError'));
     } finally {
       setSavingPwd(false);
     }
@@ -46,21 +46,21 @@ export function AccountPage() {
     e.preventDefault();
     setDeleteError(null);
     const ok = await confirm({
-      title: '¿Eliminar tu cuenta?',
-      message: 'Se borrarán para siempre tu cuenta, tus negocios, sus reseñas y todos los análisis. No se puede deshacer.',
-      confirmLabel: 'Eliminar mi cuenta',
+      title: t('account.confirmTitle'),
+      message: t('account.confirmText'),
+      confirmLabel: t('account.deleteSubmit'),
       danger: true,
-      requireText: DELETE_WORD,
+      requireText: t('account.deleteWord'),
     });
     if (!ok) return;
     setDeleting(true);
     try {
       await api.auth.deleteAccount(deletePassword);
       await logout();
-      toast.success('Tu cuenta y todos tus datos fueron eliminados.');
+      toast.success(t('account.deleted'));
       navigate('/login', { replace: true });
     } catch (err) {
-      setDeleteError(err instanceof ApiError ? err.message : 'No se pudo eliminar la cuenta');
+      setDeleteError(i18n.errorMessage(err, 'account.deleteError'));
       setDeleting(false);
     }
   }
@@ -68,16 +68,16 @@ export function AccountPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-ink">Mi cuenta</h1>
+        <h1 className="text-2xl font-bold text-ink">{t('account.title')}</h1>
         <p className="mt-1 text-ink-2">
           {user?.name} · {user?.email}
         </p>
       </div>
 
-      <Card title="Cambiar contraseña" subtitle="Al cambiarla se cierran las sesiones abiertas en otros dispositivos.">
+      <Card title={t('account.pwdTitle')} subtitle={t('account.pwdSubtitle')}>
         <form onSubmit={changePassword} className="space-y-4">
           <Field
-            label="Contraseña actual"
+            label={t('account.current')}
             type="password"
             autoComplete="current-password"
             required
@@ -86,7 +86,7 @@ export function AccountPage() {
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Nueva contraseña"
+              label={t('account.new')}
               type="password"
               autoComplete="new-password"
               required
@@ -96,7 +96,7 @@ export function AccountPage() {
               onChange={(e) => setPwd({ ...pwd, next: e.target.value })}
             />
             <Field
-              label="Repite la nueva contraseña"
+              label={t('account.repeat')}
               type="password"
               autoComplete="new-password"
               required
@@ -107,19 +107,17 @@ export function AccountPage() {
           <PasswordChecklist password={pwd.next} email={user?.email} />
           {pwdError && <Alert>{pwdError}</Alert>}
           <Button type="submit" loading={savingPwd} icon="check">
-            Cambiar contraseña
+            {t('account.pwdSubmit')}
           </Button>
         </form>
       </Card>
 
       <section className="rounded-lg border border-critical/40 bg-card p-5 sm:p-6">
-        <h2 className="text-base font-bold text-critical">Eliminar cuenta</h2>
-        <p className="mt-1 text-sm text-ink-2">
-          Derecho de supresión (Ley 1581 de 2012): borra tu cuenta y todos tus datos de forma permanente. Confirma con tu contraseña.
-        </p>
+        <h2 className="text-base font-bold text-critical">{t('account.deleteTitle')}</h2>
+        <p className="mt-1 text-sm text-ink-2">{t('account.deleteText')}</p>
         <form onSubmit={deleteAccount} className="mt-4 space-y-4">
           <Field
-            label="Contraseña"
+            label={t('common.password')}
             type="password"
             autoComplete="current-password"
             required
@@ -128,7 +126,7 @@ export function AccountPage() {
           />
           {deleteError && <Alert>{deleteError}</Alert>}
           <Button type="submit" variant="danger" icon="trash" loading={deleting} disabled={!deletePassword}>
-            Eliminar mi cuenta
+            {t('account.deleteSubmit')}
           </Button>
         </form>
       </section>

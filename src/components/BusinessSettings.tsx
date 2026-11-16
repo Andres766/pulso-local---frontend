@@ -1,8 +1,8 @@
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ApiError } from '../api/http';
 import { api } from '../api/services';
 import { BUSINESS_CATEGORIES, type Business, type BusinessCategory } from '../api/types';
+import { useI18n } from '../i18n/I18nContext';
 import { useConfirm } from './confirm';
 import { useToast } from './toast';
 import { Alert, Button, Card, Field, Select } from './ui';
@@ -23,6 +23,8 @@ export function BusinessSettings({
   const confirm = useConfirm();
   const toast = useToast();
   const navigate = useNavigate();
+  const i18n = useI18n();
+  const { t } = i18n;
 
   async function save(e: FormEvent) {
     e.preventDefault();
@@ -35,10 +37,10 @@ export function BusinessSettings({
         city: form.city.trim() || null,
       });
       onSaved(updated);
-      toast.success('Datos del negocio actualizados.');
+      toast.success(t('settings.saved'));
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo guardar');
+      setError(i18n.errorMessage(err, 'settings.saveError'));
     } finally {
       setSaving(false);
     }
@@ -46,27 +48,27 @@ export function BusinessSettings({
 
   async function remove() {
     const ok = await confirm({
-      title: `¿Eliminar «${business.name}»?`,
-      message: 'Se borrarán para siempre todas sus reseñas, análisis y recomendaciones. Esta acción no se puede deshacer.',
-      confirmLabel: 'Eliminar negocio',
+      title: t('settings.confirmTitle', { name: business.name }),
+      message: t('settings.confirmText'),
+      confirmLabel: t('settings.delete'),
       danger: true,
       requireText: business.name,
     });
     if (!ok) return;
     try {
       await api.businesses.remove(business.id);
-      toast.success(`«${business.name}» fue eliminado.`);
+      toast.success(t('settings.deleted', { name: business.name }));
       navigate('/', { replace: true });
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'No se pudo eliminar');
+      toast.error(i18n.errorMessage(err, 'settings.deleteError'));
     }
   }
 
   return (
-    <Card title="Datos del negocio" className="print:hidden">
+    <Card title={t('settings.title')} className="print:hidden">
       <form onSubmit={save} className="grid gap-4 sm:grid-cols-3">
         <Field
-          label="Nombre"
+          label={t('common.name')}
           required
           minLength={2}
           maxLength={120}
@@ -74,17 +76,17 @@ export function BusinessSettings({
           onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
         <Select
-          label="Categoría"
+          label={t('common.category')}
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value as BusinessCategory })}
         >
           {BUSINESS_CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
+            <option key={c} value={c}>
+              {t(`category.${c}`)}
             </option>
           ))}
         </Select>
-        <Field label="Ciudad" maxLength={80} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+        <Field label={t('common.city')} maxLength={80} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
         {error && (
           <div className="sm:col-span-3">
             <Alert>{error}</Alert>
@@ -92,14 +94,14 @@ export function BusinessSettings({
         )}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 sm:col-span-3">
           <Button type="button" variant="danger" icon="alert" onClick={remove}>
-            Eliminar negocio
+            {t('settings.delete')}
           </Button>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" loading={saving} icon="check">
-              Guardar cambios
+              {t('common.save')}
             </Button>
           </div>
         </div>

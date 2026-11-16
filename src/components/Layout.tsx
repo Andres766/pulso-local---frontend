@@ -1,27 +1,32 @@
 import { Suspense, useEffect, useRef } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth/AuthContext';
+import { useI18n } from '../i18n/I18nContext';
+import type { MessageKey } from '../i18n/messages';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Icon } from './icons';
+import { LanguageToggle } from './LanguageToggle';
 import { ThemeToggle } from './ThemeToggle';
 import { Logo, Skeleton } from './ui';
 
 function PageSkeleton() {
+  const { t } = useI18n();
   return (
-    <div className="space-y-6" role="status" aria-label="Cargando página">
+    <div className="space-y-6" role="status" aria-label={t('common.loading')}>
       <Skeleton className="h-24" />
       <Skeleton className="h-64" />
     </div>
   );
 }
 
-const NAV = [
-  { to: '/', label: 'Mis negocios', end: true },
-  { to: '/cuenta', label: 'Mi cuenta', end: false },
+const NAV: { to: string; label: MessageKey; end: boolean }[] = [
+  { to: '/', label: 'nav.businesses', end: true },
+  { to: '/cuenta', label: 'nav.account', end: false },
 ];
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const main = useRef<HTMLElement>(null);
@@ -44,15 +49,15 @@ export function Layout() {
         href="#contenido"
         className="sr-only z-50 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-on-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
       >
-        Saltar al contenido
+        {t('nav.skip')}
       </a>
       <header className="sticky top-0 z-20 border-b border-line bg-surface print:hidden">
         <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-6">
-            <Link to="/" aria-label="PulsoLocal: ir a mis negocios">
+            <Link to="/" aria-label={t('nav.home')}>
               <Logo />
             </Link>
-            <nav aria-label="Principal" className="hidden items-center gap-1 sm:flex">
+            <nav aria-label={t('nav.main')} className="hidden items-center gap-1 sm:flex">
               {NAV.map((item) => (
                 <NavLink
                   key={item.to}
@@ -62,18 +67,19 @@ export function Layout() {
                     `rounded-md px-2.5 py-1 text-sm font-medium transition-colors ${isActive ? 'bg-brand-soft text-ink' : 'text-ink-2 hover:text-ink'}`
                   }
                 >
-                  {item.label}
+                  {t(item.label)}
                 </NavLink>
               ))}
             </nav>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             <Link
               to="/cuenta"
               className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-brand-soft"
-              title={`Cuenta de ${user?.name ?? ''}`}
-              aria-label={`Cuenta de ${user?.name ?? ''}`}
+              title={t('nav.accountOf', { name: user?.name ?? '' })}
+              aria-label={t('nav.accountOf', { name: user?.name ?? '' })}
             >
               <span className="grid h-7 w-7 place-items-center rounded-full bg-[#dbe7f6] text-xs font-semibold text-[#1c4f8f]" aria-hidden>
                 {initial}
@@ -87,8 +93,8 @@ export function Layout() {
                 navigate('/login');
               }}
               className="grid h-8 w-8 place-items-center rounded-md text-ink-2 transition-colors hover:bg-brand-soft hover:text-ink"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
+              aria-label={t('nav.logout')}
+              title={t('nav.logout')}
             >
               <Icon name="logout" />
             </button>
@@ -106,8 +112,8 @@ export function Layout() {
       </main>
       <footer className="border-t border-line print:hidden">
         <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2 px-4 py-4 text-xs text-ink-3">
-          <span>PulsoLocal · reseñas de clientes convertidas en un plan de acción</span>
-          <span>Programación Orientada a la Web · UCC Pasto</span>
+          <span>PulsoLocal · {t('app.tagline')}</span>
+          <span>{t('app.course')}</span>
         </div>
       </footer>
     </div>

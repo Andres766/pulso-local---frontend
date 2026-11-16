@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { Button, Field } from './ui';
 
 export interface ConfirmOptions {
@@ -26,6 +27,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const resolver = useRef<((ok: boolean) => void) | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const { t } = useI18n();
 
   const confirm = useCallback<Confirm>((next) => {
     setTyped('');
@@ -75,7 +77,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             <div className="text-sm text-ink-2">{options.message}</div>
             {options.requireText && (
               <Field
-                label={`Escribe «${options.requireText}» para confirmar`}
+                label={t('common.typeToConfirm', { text: options.requireText })}
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 autoComplete="off"
@@ -84,10 +86,10 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             )}
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="secondary" onClick={() => close(false)}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button type="submit" variant={options.danger ? 'danger' : 'primary'} disabled={blocked}>
-                {options.confirmLabel ?? 'Confirmar'}
+                {options.confirmLabel ?? t('common.confirm')}
               </Button>
             </div>
           </form>

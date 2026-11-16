@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { Icon, type IconName } from './icons';
 
 type Tone = 'success' | 'error' | 'info';
@@ -33,6 +34,7 @@ const STYLE: Record<Tone, { icon: IconName; className: string }> = {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
+  const i18n = useI18n();
 
   const dismiss = useCallback((id: number) => setToasts((list) => list.filter((t) => t.id !== id)), []);
 
@@ -70,7 +72,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     type="button"
                     onClick={() => dismiss(t.id)}
                     className="ml-2 text-ink-3 hover:text-ink"
-                    aria-label="Cerrar notificación"
+                    aria-label={i18n.t('common.closeNotification')}
                   >
                     ×
                   </button>

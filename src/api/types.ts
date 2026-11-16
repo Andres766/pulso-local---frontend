@@ -4,18 +4,9 @@ export type SentimentLabel = 'positive' | 'neutral' | 'negative';
 export type AnalysisStatus = 'pending' | 'running' | 'completed' | 'failed';
 export type Priority = 'alta' | 'media' | 'baja';
 
-export const BUSINESS_CATEGORIES = [
-  { value: 'restaurante', label: 'Restaurante' },
-  { value: 'cafeteria', label: 'Cafetería' },
-  { value: 'tienda', label: 'Tienda' },
-  { value: 'belleza', label: 'Belleza' },
-  { value: 'servicios', label: 'Servicios' },
-  { value: 'salud', label: 'Salud' },
-  { value: 'otro', label: 'Otro' },
-] as const;
-export type BusinessCategory = (typeof BUSINESS_CATEGORIES)[number]['value'];
-
-export const categoryLabel = (c: BusinessCategory) => BUSINESS_CATEGORIES.find((x) => x.value === c)?.label ?? c;
+/** Las etiquetas visibles están en i18n/messages.ts (category.*). */
+export const BUSINESS_CATEGORIES = ['restaurante', 'cafeteria', 'tienda', 'belleza', 'servicios', 'salud', 'otro'] as const;
+export type BusinessCategory = (typeof BUSINESS_CATEGORIES)[number];
 
 export interface User {
   id: string;
@@ -144,15 +135,9 @@ export interface ReviewItem {
   topics: string[];
 }
 
-export const REVIEW_SORTS = [
-  { value: 'recent', label: 'Más recientes' },
-  { value: 'oldest', label: 'Más antiguas' },
-  { value: 'most_negative', label: 'Más negativas primero' },
-  { value: 'most_positive', label: 'Más positivas primero' },
-  { value: 'rating_asc', label: 'Menos estrellas primero' },
-  { value: 'rating_desc', label: 'Más estrellas primero' },
-] as const;
-export type ReviewSort = (typeof REVIEW_SORTS)[number]['value'];
+/** Las etiquetas visibles están en i18n/messages.ts (sort.*). */
+export const REVIEW_SORTS = ['recent', 'oldest', 'most_negative', 'most_positive', 'rating_asc', 'rating_desc'] as const;
+export type ReviewSort = (typeof REVIEW_SORTS)[number];
 
 export interface ImportSummary {
   received: number;

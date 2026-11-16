@@ -1,8 +1,8 @@
 import { describeProvider } from '../api/providers';
 import type { AnalysisRun, AnalysisStatus, InsightComparison, TopicTrend } from '../api/types';
+import { useI18n } from '../i18n/I18nContext';
+import type { MessageKey } from '../i18n/messages';
 import { Icon, type IconName } from './icons';
-
-const fmt = (n: number) => n.toLocaleString('es-CO', { maximumFractionDigits: 1 });
 
 /**
  * Variación en puntos porcentuales. `goodWhen` indica qué dirección es buena:
@@ -11,16 +11,19 @@ const fmt = (n: number) => n.toLocaleString('es-CO', { maximumFractionDigits: 1 
 export function Delta({
   value,
   goodWhen,
-  unit = 'pts',
-  label = 'vs. análisis anterior',
+  unit,
+  label,
 }: {
   value: number;
   goodWhen: 'up' | 'down';
   unit?: string;
+  /** Texto tras la cifra; por defecto "vs. análisis anterior". Una cadena vacía lo omite. */
   label?: string;
 }) {
+  const { t, number } = useI18n();
+  const suffix = label ?? t('delta.vsPrevious');
   if (Math.abs(value) < 0.05) {
-    return <span className="text-xs text-ink-3">Sin cambios {label}</span>;
+    return <span className="text-xs text-ink-3">{t('delta.unchanged', { label: suffix }).trim()}</span>;
   }
   const up = value > 0;
   const good = (up && goodWhen === 'up') || (!up && goodWhen === 'down');
@@ -29,23 +32,24 @@ export function Delta({
       <Icon name={up ? 'arrowUp' : 'arrowDown'} className="h-3.5 w-3.5" />
       <span className="num whitespace-nowrap">
         {up ? '+' : '−'}
-        {fmt(Math.abs(value))} {unit}
+        {number(Math.abs(value))} {unit ?? t('delta.unit')}
       </span>
-      {label && <span className="font-normal text-ink-3">{label}</span>}
+      {suffix && <span className="font-normal text-ink-3">{suffix}</span>}
     </span>
   );
 }
 
-const TREND: Record<TopicTrend, { label: string; icon: IconName; className: string; order: number }> = {
-  worsened: { label: 'Empeoró', icon: 'arrowUp', className: 'bg-critical-soft text-critical', order: 0 },
-  new: { label: 'Nuevo', icon: 'sparkles', className: 'bg-warning-soft text-warning', order: 1 },
-  improved: { label: 'Mejoró', icon: 'arrowDown', className: 'bg-good-soft text-good', order: 2 },
-  resolved: { label: 'Resuelto', icon: 'check', className: 'bg-good-soft text-good', order: 3 },
-  stable: { label: 'Estable', icon: 'clock', className: 'bg-brand-soft text-ink-2', order: 4 },
+const TREND: Record<TopicTrend, { label: MessageKey; icon: IconName; className: string; order: number }> = {
+  worsened: { label: 'trendLabel.worsened', icon: 'arrowUp', className: 'bg-critical-soft text-critical', order: 0 },
+  new: { label: 'trendLabel.new', icon: 'sparkles', className: 'bg-warning-soft text-warning', order: 1 },
+  improved: { label: 'trendLabel.improved', icon: 'arrowDown', className: 'bg-good-soft text-good', order: 2 },
+  resolved: { label: 'trendLabel.resolved', icon: 'check', className: 'bg-good-soft text-good', order: 3 },
+  stable: { label: 'trendLabel.stable', icon: 'clock', className: 'bg-brand-soft text-ink-2', order: 4 },
 };
 
 /** Tabla de cambios por tema: lo que empeoró primero, porque es lo que hay que atender. */
 export function TopicEvolution({ comparison }: { comparison: InsightComparison }) {
+  const i18n = useI18n();
   const rows = [...comparison.topics].sort(
     (a, b) => TREND[a.trend].order - TREND[b.trend].order || Math.abs(b.complaintDelta ?? 0) - Math.abs(a.complaintDelta ?? 0),
   );
@@ -53,20 +57,20 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <caption className="sr-only">Quejas por tema: análisis anterior frente al actual</caption>
+        <caption className="sr-only">{i18n.t('evolution.caption')}</caption>
         <thead>
           <tr className="border-b border-line text-left text-xs text-ink-3">
             <th scope="col" className="py-2 pr-3 font-normal">
-              Tema
+              {i18n.t('evolution.topic')}
             </th>
             <th scope="col" className="py-2 pr-3 text-right font-normal">
-              Antes
+              {i18n.t('evolution.before')}
             </th>
             <th scope="col" className="py-2 pr-3 text-right font-normal">
-              Ahora
+              {i18n.t('evolution.now')}
             </th>
             <th scope="col" className="py-2 text-right font-normal">
-              Tendencia
+              {i18n.t('evolution.trend')}
             </th>
           </tr>
         </thead>
@@ -79,20 +83,20 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
                   {t.name}
                 </th>
                 <td className="py-2.5 pr-3 text-right tabular-nums text-ink-2">
-                  {t.previousComplaintShare === null ? '—' : `${fmt(t.previousComplaintShare)}%`}
+                  {t.previousComplaintShare === null ? '—' : i18n.percent(t.previousComplaintShare)}
                 </td>
-                <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-ink">{fmt(t.complaintShare)}%</td>
+                <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-ink">{i18n.percent(t.complaintShare)}</td>
                 <td className="py-2.5 text-right">
                   <span
                     className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap ${trend.className}`}
                   >
                     <Icon name={trend.icon} className="h-3 w-3" />
-                    {trend.label}
+                    {i18n.t(trend.label)}
                     {t.complaintDelta !== null && t.trend !== 'stable' && (
                       <span className="tabular-nums">
                         {' '}
                         ({t.complaintDelta > 0 ? '+' : '−'}
-                        {fmt(Math.abs(t.complaintDelta))})
+                        {i18n.number(Math.abs(t.complaintDelta))})
                       </span>
                     )}
                   </span>
@@ -102,26 +106,34 @@ export function TopicEvolution({ comparison }: { comparison: InsightComparison }
           })}
         </tbody>
       </table>
-      <p className="mt-3 text-xs text-ink-3">
-        Porcentaje de reseñas que se quejan de cada tema. Cambios menores a 2 puntos se consideran estables.
-      </p>
+      <p className="mt-3 text-xs text-ink-3">{i18n.t('evolution.note')}</p>
     </div>
   );
 }
 
-/** 11215 → "11,2 mil": cifra legible para el dueño del negocio. */
-const formatTokens = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString('es-CO', { maximumFractionDigits: 1 })} mil` : String(n));
-
-const STATUS: Record<AnalysisStatus, { label: string; className: string }> = {
-  completed: { label: 'Completado', className: 'text-good' },
-  failed: { label: 'Fallido', className: 'text-critical' },
-  running: { label: 'En curso', className: 'text-ink' },
-  pending: { label: 'En cola', className: 'text-ink' },
+const STATUS: Record<AnalysisStatus, { label: MessageKey; className: string }> = {
+  completed: { label: 'status.completed', className: 'text-good' },
+  failed: { label: 'status.failed', className: 'text-critical' },
+  running: { label: 'status.running', className: 'text-ink' },
+  pending: { label: 'status.pending', className: 'text-ink' },
 };
+
+/** Nombre del motor que hizo el análisis, en el idioma de la interfaz para el léxico local. */
+function useProviderName() {
+  const { t } = useI18n();
+  return (id: string) => {
+    const p = describeProvider(id);
+    return p.isLlm ? p.name : t('provider.lexicon');
+  };
+}
 
 /** Línea de tiempo de los últimos análisis. */
 export function AnalysisHistory({ runs, currentId }: { runs: AnalysisRun[]; currentId: string | null }) {
-  if (runs.length === 0) return <p className="text-sm text-ink-2">Aún no hay análisis.</p>;
+  const { t, plural, number, dateTime } = useI18n();
+  const providerName = useProviderName();
+  /** 11215 → "11,2 mil" / "11.2k": cifra legible para el dueño del negocio. */
+  const formatTokens = (n: number) => (n >= 1000 ? t('history.thousand', { n: number(n / 1000) }) : String(n));
+  if (runs.length === 0) return <p className="text-sm text-ink-2">{t('history.none')}</p>;
   return (
     <ol className="relative space-y-4 border-l border-line pl-5">
       {runs.map((r) => (
@@ -131,20 +143,22 @@ export function AnalysisHistory({ runs, currentId }: { runs: AnalysisRun[]; curr
             className={`absolute -left-[26px] top-1 h-3 w-3 rounded-full border-2 border-card ${r.id === currentId ? 'bg-pos' : r.status === 'failed' ? 'bg-critical' : 'bg-line'}`}
           />
           <p className="text-sm font-medium text-ink">
-            {new Date(r.createdAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
-            {r.id === currentId && <span className="ml-2 rounded bg-brand-soft px-1.5 py-0.5 text-xs font-medium text-ink">Actual</span>}
+            {dateTime(r.createdAt)}
+            {r.id === currentId && (
+              <span className="ml-2 rounded bg-brand-soft px-1.5 py-0.5 text-xs font-medium text-ink">{t('history.current')}</span>
+            )}
           </p>
           <p className="text-xs text-ink-2">
             <span className={`font-semibold ${STATUS[r.status].className}`}>
-              {r.status === 'pending' && r.attempts > 0 ? 'Reintentando' : STATUS[r.status].label}
+              {t(r.status === 'pending' && r.attempts > 0 ? 'status.retrying' : STATUS[r.status].label)}
             </span>{' '}
-            · {r.reviewCount} reseñas · {describeProvider(r.provider).name}
-            {r.attempts > 1 && ` · ${r.attempts} intentos`}
+            · {t('history.reviews', { count: r.reviewCount })} · {providerName(r.provider)}
+            {r.attempts > 1 && ` · ${t('history.attempts', { count: r.attempts })}`}
           </p>
           {r.usage?.calls > 0 && (
             <p className="text-xs text-ink-3">
-              {r.usage.calls} {r.usage.calls === 1 ? 'llamada' : 'llamadas'} a la IA ·{' '}
-              {formatTokens(r.usage.inputTokens + r.usage.outputTokens)} tokens
+              {plural('history.calls', r.usage.calls)} ·{' '}
+              {t('history.tokens', { tokens: formatTokens(r.usage.inputTokens + r.usage.outputTokens) })}
             </p>
           )}
           {r.error && <p className="mt-0.5 text-xs text-critical">{r.error}</p>}
