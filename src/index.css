@@ -13,7 +13,7 @@
 @theme {
   --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-surface: #f2f4f7;
+  --color-surface: #eef2f7;
   --color-card: #ffffff;
   --color-raised: #f7f8fa;
   --color-ink: #111111;
@@ -21,9 +21,9 @@
   --color-ink-3: #6b6b6b;
   --color-line: #e5e7eb;
   --color-control: #d1d5db;
-  --color-brand: #1d1f20;
-  --color-brand-strong: #000000;
-  --color-brand-soft: #ebedf0;
+  --color-brand: #1c5cab;
+  --color-brand-strong: #164a8a;
+  --color-brand-soft: #e6eefa;
   --color-on-brand: #ffffff;
 
   --color-pos: #2a78d6;
@@ -49,10 +49,10 @@
     --color-ink-3: #949494;
     --color-line: #2a2a2c;
     --color-control: #444446;
-    --color-brand: #f5f5f5;
-    --color-brand-strong: #ffffff;
-    --color-brand-soft: #262628;
-    --color-on-brand: #111111;
+    --color-brand: #5b9bea;
+    --color-brand-strong: #86b6ef;
+    --color-brand-soft: #1b2738;
+    --color-on-brand: #0b1220;
 
     --color-pos: #3987e5;
     --color-neu: #56554f;
@@ -115,5 +115,45 @@
     animation-duration: 0.01ms !important;
     /* biome-ignore lint/complexity/noImportantStyles: preferencia de accesibilidad del usuario */
     transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Color de identidad del negocio (--biz, ver components/brand.tsx). Va en franjas, monogramas e
+ * íconos; nunca en los datos de sentimiento, que conservan su escala azul/gris/rojo.
+ */
+:root {
+  --biz: #1c5cab;
+}
+
+@layer components {
+  .biz-band {
+    background-color: var(--biz);
+    color: #fff;
+  }
+  .biz-soft {
+    background-color: color-mix(in srgb, var(--biz) 12%, transparent);
+  }
+  .biz-ink {
+    color: var(--biz);
+  }
+  .biz-icon {
+    background-color: color-mix(in srgb, var(--biz) 12%, transparent);
+    color: var(--biz);
+  }
+  /* En oscuro el color se aclara para leerse sobre la superficie oscura. */
+  [data-theme="dark"] .biz-ink,
+  [data-theme="dark"] .biz-icon {
+    color: color-mix(in srgb, var(--biz) 45%, white);
+  }
+  .biz-hover:hover {
+    background-color: color-mix(in srgb, var(--biz) 7%, transparent);
+  }
+  [data-theme="dark"] .biz-band {
+    background-color: color-mix(in srgb, var(--biz) 82%, black);
+  }
+  [data-theme="dark"] .biz-soft,
+  [data-theme="dark"] .biz-icon {
+    background-color: color-mix(in srgb, var(--biz) 22%, transparent);
   }
 }

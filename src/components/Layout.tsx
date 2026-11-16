@@ -55,7 +55,7 @@ export function Layout() {
         <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-6">
             <Link to="/" aria-label={t('nav.home')}>
-              <Logo />
+              <Logo compactOnPhone />
             </Link>
             <nav aria-label={t('nav.main')} className="hidden items-center gap-1 sm:flex">
               {NAV.map((item) => (

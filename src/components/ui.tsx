@@ -4,13 +4,16 @@ import { Icon, type IconName } from './icons';
 
 /** Primitivas de UI reutilizables. Todo el texto lo escapa React (no se usa dangerouslySetInnerHTML). */
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'onBand' | 'onBandPrimary';
 
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-brand text-on-brand hover:bg-brand-strong',
   secondary: 'bg-card text-ink border border-control hover:bg-raised',
   ghost: 'text-ink-2 hover:text-ink hover:bg-brand-soft',
   danger: 'text-critical border border-control bg-card hover:bg-critical-soft',
+  // Sobre la franja de color del negocio: translúcido, y el principal en blanco con el color del negocio.
+  onBand: 'text-white border border-white/30 bg-white/10 hover:bg-white/20',
+  onBandPrimary: 'bg-white text-[var(--biz)] font-semibold hover:bg-white/90',
 };
 
 export function Button({
@@ -37,23 +40,33 @@ export function Button({
 export function Card({
   title,
   subtitle,
+  icon,
   action,
   children,
   className = '',
 }: {
   title?: ReactNode;
   subtitle?: ReactNode;
+  /** Ícono en el color del negocio (o de la marca) junto al título. */
+  icon?: IconName;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section className={`rounded-lg border border-line bg-card p-5 ${className}`}>
+    <section className={`rounded-xl border border-line bg-card p-5 ${className}`}>
       {(title || action) && (
         <header className="mb-4 flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            {title && <h2 className="text-base font-semibold text-ink">{title}</h2>}
-            {subtitle && <p className="mt-0.5 text-sm text-ink-2">{subtitle}</p>}
+          <div className="flex min-w-0 items-start gap-3">
+            {icon && (
+              <span className="biz-icon grid h-8 w-8 shrink-0 place-items-center rounded-lg" aria-hidden>
+                <Icon name={icon} className="h-4 w-4" />
+              </span>
+            )}
+            <div className="min-w-0">
+              {title && <h2 className="text-base font-semibold text-ink">{title}</h2>}
+              {subtitle && <p className="mt-0.5 text-sm text-ink-2">{subtitle}</p>}
+            </div>
           </div>
           {action}
         </header>
@@ -149,7 +162,16 @@ export function EmptyState({ icon, title, children }: { icon: IconName; title: s
   );
 }
 
-export function Logo({ className = '', inverted = false }: { className?: string; inverted?: boolean }) {
+export function Logo({
+  className = '',
+  inverted = false,
+  compactOnPhone = false,
+}: {
+  className?: string;
+  inverted?: boolean;
+  /** En pantallas muy angostas muestra solo el ícono (la barra superior no alcanza). */
+  compactOnPhone?: boolean;
+}) {
   return (
     <span
       className={`inline-flex items-center gap-2 text-base font-bold tracking-tight ${inverted ? 'text-white' : 'text-ink'} ${className}`}
@@ -158,7 +180,7 @@ export function Logo({ className = '', inverted = false }: { className?: string;
         <rect width="32" height="32" rx="7" fill={inverted ? 'rgb(255 255 255 / 0.16)' : '#1c5cab'} />
         <path d="M5 17h6l3-7 4 13 3-6h6" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      PulsoLocal
+      <span className={compactOnPhone ? 'hidden min-[420px]:inline' : ''}>PulsoLocal</span>
     </span>
   );
 }

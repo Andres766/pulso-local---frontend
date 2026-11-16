@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/services';
 import { BUSINESS_CATEGORIES, type BusinessCategory, type BusinessPulse } from '../api/types';
+import { bizStyle, PulseMotif } from '../components/brand';
 import { SentimentStrip } from '../components/charts';
 import { Delta } from '../components/evolution';
 import { Icon } from '../components/icons';
@@ -10,17 +11,6 @@ import { Alert, Button, Card, EmptyState, Field, Select, Skeleton } from '../com
 import { usePageTitle } from '../hooks/usePageTitle';
 import { type I18n, useI18n } from '../i18n/I18nContext';
 import { useRealtimeAnalyses } from '../realtime/useRealtime';
-
-/** Tintes pálidos de identidad (no son datos): cada negocio conserva el suyo en la lista. */
-const IDENTITY = [
-  'bg-[#dbe7f6] text-[#1c4f8f]',
-  'bg-[#dcefe2] text-[#1f5e3a]',
-  'bg-[#f6e9d2] text-[#7a4a0c]',
-  'bg-[#f6dde3] text-[#8a2440]',
-  'bg-[#d6eeee] text-[#1d5c5c]',
-  'bg-[#e3e6ec] text-[#3b4252]',
-];
-const identityOf = (id: string) => IDENTITY[[...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % IDENTITY.length];
 
 /** "hace 3 horas", "ayer", "hace 2 semanas" (o su versión en inglés). */
 export function timeAgo(iso: string, locale: string, now = Date.now()): string {
@@ -48,7 +38,7 @@ export function portfolioFinding(items: BusinessPulse[], { t }: Pick<I18n, 't'>)
   return t('businesses.finding', { name: worst.business.name, share: negative, complaint });
 }
 
-const COLUMNS = 'md:grid-cols-[2.25rem_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)_5.5rem_1rem]';
+const COLUMNS = 'md:grid-cols-[2.5rem_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)_5.5rem_1rem]';
 
 function PulseRow({ pulse }: { pulse: BusinessPulse }) {
   const { business: b, sentiment, analyzedReviews, topComplaint } = pulse;
@@ -56,17 +46,22 @@ function PulseRow({ pulse }: { pulse: BusinessPulse }) {
   const { t, number, locale } = useI18n();
 
   return (
-    <li>
+    <li style={bizStyle(b.category)}>
       <Link
         to={`/negocios/${b.id}`}
-        className={`group grid grid-cols-[2.25rem_1fr_auto] items-center gap-x-3 gap-y-2 px-5 py-3.5 transition-colors hover:bg-raised ${COLUMNS}`}
+        className={`biz-hover group relative grid grid-cols-[2.5rem_1fr_auto] items-center gap-x-3 gap-y-2 px-5 py-4 transition-colors ${COLUMNS}`}
       >
-        <span className={`grid h-9 w-9 place-items-center rounded-full text-sm font-semibold ${identityOf(b.id)}`} aria-hidden>
+        {/* Franja del color del negocio: se ensancha al pasar el puntero. */}
+        <span className="biz-band absolute inset-y-0 left-0 w-1 transition-[width] group-hover:w-1.5" aria-hidden />
+        <span className="biz-band grid h-10 w-10 place-items-center rounded-xl text-base font-bold shadow-sm" aria-hidden>
           {b.name.charAt(0).toUpperCase()}
         </span>
         <span className="min-w-0">
           <span className="block font-semibold text-ink md:truncate">{b.name}</span>
-          <span className="block truncate text-sm text-ink-2">{[t(`category.${b.category}`), b.city].filter(Boolean).join(' · ')}</span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-ink-2">
+            <span className="biz-soft biz-ink rounded-full px-2 py-px text-xs font-semibold">{t(`category.${b.category}`)}</span>
+            {b.city}
+          </span>
         </span>
 
         {/* En el teléfono, sentimiento y queja pasan a líneas propias debajo del nombre. */}
@@ -74,7 +69,7 @@ function PulseRow({ pulse }: { pulse: BusinessPulse }) {
           {sentiment ? (
             <>
               <span className="flex flex-wrap items-baseline gap-x-2 text-sm">
-                <span className="num font-medium text-ink">
+                <span className="num font-semibold text-pos">
                   {t('businesses.satisfied', { share: share(sentiment.positive, analyzedReviews) })}
                 </span>
                 {pulse.positiveShareDelta !== null && <Delta value={pulse.positiveShareDelta} goodWhen="up" label="" />}
@@ -162,27 +157,50 @@ export function BusinessesPage() {
 
   const totalReviews = items?.reduce((n, p) => n + p.reviewCount, 0) ?? 0;
   const finding = items ? portfolioFinding(items, i18n) : null;
+  // Satisfechos de toda la cartera: positivas sobre analizadas, sumando los negocios (no promedio de promedios).
+  const analyzedTotal = items?.reduce((n, p) => n + (p.sentiment ? p.analyzedReviews : 0), 0) ?? 0;
+  const positiveTotal = items?.reduce((n, p) => n + (p.sentiment?.positive ?? 0), 0) ?? 0;
+  const stats =
+    items && items.length > 0
+      ? [
+          { label: t('businesses.statBusinesses'), value: i18n.number(items.length, 0) },
+          { label: t('businesses.statReviews'), value: i18n.number(totalReviews, 0) },
+          ...(analyzedTotal > 0
+            ? [{ label: t('businesses.statSatisfied'), value: i18n.percent(Math.round((positiveTotal / analyzedTotal) * 100), 0) }]
+            : []),
+        ]
+      : [];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-ink">{t('businesses.title')}</h1>
-        <p className="mt-1 text-sm text-ink-2">
-          {items === null
-            ? t('businesses.loading')
-            : items.length === 0
-              ? t('businesses.none')
-              : i18n.plural('businesses.summary', items.length, { reviews: i18n.number(totalReviews, 0) })}
-        </p>
-      </div>
-      {finding && <p className="max-w-3xl text-base text-ink">{finding}</p>}
+    <div className="space-y-5">
+      {/* Franja de la marca: el resumen de toda la cartera y el negocio que más necesita atención. */}
+      <section className="biz-band relative overflow-hidden rounded-2xl px-6 py-7 sm:px-8" style={bizStyle()}>
+        <PulseMotif className="right-0 bottom-0 h-20 w-[60%] text-white/12" />
+        <div className="relative flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl font-bold tracking-tight">{t('businesses.title')}</h1>
+            {stats.length === 0 && <p className="mt-1 text-white/80">{items === null ? t('businesses.loading') : t('businesses.none')}</p>}
+            {finding && <p className="mt-3 text-lg leading-snug text-white/95">{finding}</p>}
+          </div>
+          {stats.length > 0 && (
+            <dl className="flex flex-wrap gap-x-8 gap-y-3">
+              {stats.map((s) => (
+                <div key={s.label}>
+                  <dt className="text-sm text-white/75">{s.label}</dt>
+                  <dd className="num text-3xl font-bold">{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      </section>
 
       {error && <Alert>{error}</Alert>}
 
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_320px]">
         {items === null ? (
           <div
-            className="space-y-px overflow-hidden rounded-lg border border-line bg-card"
+            className="space-y-px overflow-hidden rounded-xl border border-line bg-card"
             role="status"
             aria-label={t('businesses.loadingList')}
           >
@@ -195,7 +213,7 @@ export function BusinessesPage() {
             {t('businesses.emptyText')}
           </EmptyState>
         ) : (
-          <section className="overflow-hidden rounded-lg border border-line bg-card" aria-labelledby="pulso-titulo">
+          <section className="overflow-hidden rounded-xl border border-line bg-card" aria-labelledby="pulso-titulo">
             <div className="flex items-baseline justify-between gap-4 px-5 pt-4 pb-3">
               <h2 id="pulso-titulo" className="text-base font-semibold text-ink">
                 {t('businesses.pulseTitle')}
@@ -221,7 +239,7 @@ export function BusinessesPage() {
           </section>
         )}
 
-        <Card title={t('businesses.newTitle')} subtitle={t('businesses.newSubtitle')}>
+        <Card title={t('businesses.newTitle')} subtitle={t('businesses.newSubtitle')} icon="store">
           <form onSubmit={onCreate} className="space-y-4">
             <Field
               label={t('common.name')}

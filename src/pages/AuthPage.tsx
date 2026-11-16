@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { ApiError } from '../api/http';
 import { useAuth } from '../auth/AuthContext';
 import { safeRedirect } from '../auth/safeRedirect';
+import { bizStyle, PulseMotif } from '../components/brand';
 import { SentimentStrip } from '../components/charts';
 import { Icon } from '../components/icons';
 import { LanguageToggle } from '../components/LanguageToggle';
@@ -61,14 +62,15 @@ export function AuthPage({ mode }: { mode: Mode }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
       {/* Panel de presentación: un fragmento real de lo que produce PulsoLocal, con datos de ejemplo. */}
-      <aside className="hidden flex-col justify-between bg-[#111214] p-12 text-white lg:flex">
-        <Logo inverted />
+      <aside className="biz-band relative hidden flex-col justify-between overflow-hidden p-12 lg:flex" style={bizStyle()}>
+        <PulseMotif className="top-[38%] left-0 h-48 w-full text-white/15" />
+        <Logo inverted className="relative" />
 
-        <div className="max-w-lg">
+        <div className="relative max-w-lg">
           <p className="text-4xl leading-tight font-bold tracking-tight">{t('auth.headline')}</p>
           <p className="mt-3 text-lg text-white/75">{t('auth.lead')}</p>
 
-          <figure data-ui className="mt-10 rounded-lg bg-white p-5 text-[#111]">
+          <figure data-ui className="mt-10 rounded-xl bg-white p-5 text-[#111] shadow-xl shadow-black/20">
             <div className="flex items-baseline justify-between gap-4">
               <p className="font-semibold">Café Galeras</p>
               <p className="num text-xs text-[#5f6368]">{t('auth.sampleMeta', { count: SAMPLE.total })}</p>
@@ -96,7 +98,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
           </figure>
         </div>
 
-        <p className="text-sm text-white/60">{t('app.course')}</p>
+        <p className="relative text-sm text-white/70">{t('app.course')}</p>
       </aside>
 
       {/* Formulario */}
