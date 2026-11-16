@@ -17,6 +17,8 @@ temas, sentimiento y recomendaciones concretas, con inteligencia artificial.
 - Análisis con IA (Gemini): indicadores, recomendaciones priorizadas con su evidencia, sentimiento general,
   temas recurrentes, **evolución** frente al análisis anterior, **tendencia mensual**, historial con reintentos y
   consumo de tokens.
+- **Tiempo real por WebSocket:** el estado de cada análisis llega al instante (también a otras pestañas abiertas),
+  con indicador "En vivo" y polling de respaldo si el socket no está disponible.
 - Exportar a CSV y **reporte imprimible en PDF**.
 - Mi cuenta: cambio de contraseña (cierra las demás sesiones) y eliminación de la cuenta (Ley 1581 de 2012).
 - **Mis negocios** con el pulso de cada negocio: satisfechos, principal queja y variación frente al análisis anterior.
@@ -43,6 +45,7 @@ src/
 ├── hooks/        tema, sondeo de análisis, título de página, exportación
 ├── i18n/         idiomas: diccionarios es/en tipados, contexto y formato de números y fechas
 ├── pages/        Auth, Negocios, Dashboard, Mi cuenta, 404
+├── realtime/     RealtimeClient (una conexión por pestaña, reconexión exponencial) y su hook
 ├── App.tsx       mapa de rutas
 └── main.tsx      proveedores (idioma, errores, router, notificaciones, confirmación, sesión)
 e2e/              pruebas end-to-end (Playwright)
@@ -59,6 +62,9 @@ e2e/              pruebas end-to-end (Playwright)
   claves: si falta una traducción, el proyecto no compila (y una prueba verifica que coincidan las variables).
   Números, porcentajes, fechas y tiempos relativos usan `Intl` con el idioma elegido, y `<html lang>` se actualiza.
   Lo que escribe la IA (temas y recomendaciones) queda en el idioma de las reseñas: es dato, no interfaz.
+- **WebSocket directo a Render.** Vercel no reenvía WebSockets, así que el navegador se conecta a la API con un
+  ticket de un solo uso que pide por `/api` (la cookie no viaja a otro dominio). La CSP de `vercel.json` permite solo
+  ese `wss://`. En desarrollo el proxy de Vite reenvía `/api/ws` (`ws: true`) y en Docker lo hace nginx.
 - **Accesibilidad.** Enlace "Saltar al contenido", foco al contenido en cada navegación, títulos por página,
   notificaciones con `aria-live`, diálogo nativo `<dialog>`, radios nativos en el selector de tema, colores de
   sentimiento validados para daltonismo y gráficos con tabla equivalente.
