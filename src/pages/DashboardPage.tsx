@@ -4,6 +4,7 @@ import { describeProvider } from '../api/providers';
 import { api } from '../api/services';
 import { type AnalysisRun, type Dashboard, type InsightComparison, type InsightReport, MAX_ANALYSIS_ATTEMPTS } from '../api/types';
 import { BusinessSettings } from '../components/BusinessSettings';
+import { bizStyle, PulseMotif } from '../components/brand';
 import { Legend, SentimentBar, TopicChart } from '../components/charts';
 import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution';
 import { ImportPanel } from '../components/ImportPanel';
@@ -39,11 +40,19 @@ function DashboardSkeleton() {
 }
 
 /** El hallazgo del último análisis en una frase: la queja que más pesa y cómo cambió. */
-function Finding({ report, comparison }: { report: InsightReport; comparison: InsightComparison | null }) {
+function Finding({
+  report,
+  comparison,
+  className = 'text-base text-ink',
+}: {
+  report: InsightReport;
+  comparison: InsightComparison | null;
+  className?: string;
+}) {
   const { t, plural, number } = useI18n();
   const top = [...report.stats.topics].sort((a, b) => b.complaintShare - a.complaintShare)[0];
   if (!top || top.complaintShare === 0) {
-    return <p className="text-base text-ink">{t('dashboard.findingNone')}</p>;
+    return <p className={className}>{t('dashboard.findingNone')}</p>;
   }
   const delta = comparison?.topics.find((topic) => topic.key === top.key)?.complaintDelta ?? null;
   let change = '';
@@ -53,7 +62,7 @@ function Finding({ report, comparison }: { report: InsightReport; comparison: In
     else change = t(delta < 0 ? 'dashboard.findingLess' : 'dashboard.findingMore', { points });
   }
   return (
-    <p className="max-w-3xl text-base text-ink">
+    <p className={`max-w-3xl ${className}`}>
       {t('dashboard.findingLead')}
       <strong className="font-semibold">{top.name.toLowerCase()}</strong>:{' '}
       <span className="num">{t('dashboard.findingShare', { share: number(top.complaintShare) })}</span>
@@ -173,12 +182,16 @@ export function DashboardPage() {
   const provider = reportRun && (usesLlm ? describeProvider(reportRun.provider).name : t('provider.lexiconLong'));
 
   const importCard = (
-    <Card title={t('import.title')} subtitle={t('import.subtitle')} className="lg:col-span-2 print:hidden">
+    <Card title={t('import.title')} subtitle={t('import.subtitle')} icon="upload" className="lg:col-span-2 print:hidden">
       <ImportPanel businessId={business.id} onImported={() => void load()} />
     </Card>
   );
   const reviewsCard = (
-    <Card title={t('reviews.title')} subtitle={selectedTopic ? t('reviews.filteringBy', { topic: selectedTopic.name }) : t('reviews.all')}>
+    <Card
+      title={t('reviews.title')}
+      icon="message"
+      subtitle={selectedTopic ? t('reviews.filteringBy', { topic: selectedTopic.name }) : t('reviews.all')}
+    >
       {selectedTopic && (
         <div className="mb-4">
           <TopicQuotes topic={selectedTopic} />
@@ -196,50 +209,71 @@ export function DashboardPage() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5" style={bizStyle(business.category)}>
       {/* Encabezado que solo aparece en el reporte impreso / PDF */}
       <div className="hidden border-line border-b pb-4 print:block">
         <p className="text-sm font-semibold text-ink">{t('dashboard.printTitle')}</p>
         <p className="text-sm text-ink-2">{t('dashboard.printDate', { date: i18n.dateTime(new Date(), 'long') })}</p>
       </div>
 
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <div className="min-w-0">
-          <Link to="/" className="inline-flex items-center gap-1 text-sm text-ink-2 hover:text-ink print:hidden">
+      {/* Franja con el color del rubro: identidad del negocio, su hallazgo y sus acciones. */}
+      <header className="biz-band relative overflow-hidden rounded-2xl px-6 pt-5 pb-6 sm:px-8 print:rounded-none">
+        <PulseMotif className="right-0 bottom-0 h-24 w-[55%] text-white/12" />
+        <div className="relative">
+          <Link to="/" className="inline-flex items-center gap-1 text-sm text-white/80 hover:text-white print:hidden">
             <Icon name="chevronLeft" className="h-4 w-4" /> {t('dashboard.back')}
           </Link>
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-3">
-            <h1 className="text-2xl font-bold text-ink">{business.name}</h1>
-            <LiveBadge status={live} />
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/15 text-2xl font-bold" aria-hidden>
+                {business.name.charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h1 className="text-3xl font-bold tracking-tight">{business.name}</h1>
+                  <LiveBadge status={live} inverted />
+                </div>
+                <p className="mt-1 text-sm text-white/80">
+                  {[
+                    t(`category.${business.category}`),
+                    business.city,
+                    t('dashboard.reviewsCount', { count: dashboard.reviewCount }),
+                    reportRun?.finishedAt &&
+                      t('dashboard.analyzedWith', { provider: provider ?? '', date: i18n.dateTime(reportRun.finishedAt) }),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 print:hidden">
+              <Button variant="onBand" icon="tag" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
+                {t('dashboard.edit')}
+              </Button>
+              <Button variant="onBand" icon="download" onClick={exportCsv} loading={exporting} disabled={dashboard.reviewCount === 0}>
+                {t('dashboard.csv')}
+              </Button>
+              <Button variant="onBand" icon="printer" onClick={printReport} disabled={!report}>
+                {t('dashboard.pdf')}
+              </Button>
+              <Button
+                variant="onBandPrimary"
+                onClick={startAnalysis}
+                icon="sparkles"
+                loading={starting || Boolean(running)}
+                disabled={dashboard.reviewCount === 0}
+              >
+                {running ? t('dashboard.analyzing') : report ? t('dashboard.reanalyze') : t('dashboard.analyze')}
+              </Button>
+            </div>
           </div>
-          <p className="mt-1 text-sm text-ink-2">
-            {[
-              t(`category.${business.category}`),
-              business.city,
-              t('dashboard.reviewsCount', { count: dashboard.reviewCount }),
-              reportRun?.finishedAt && t('dashboard.analyzedWith', { provider: provider ?? '', date: i18n.dateTime(reportRun.finishedAt) }),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 print:hidden">
-          <Button variant="ghost" icon="tag" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
-            {t('dashboard.edit')}
-          </Button>
-          <Button variant="secondary" icon="download" onClick={exportCsv} loading={exporting} disabled={dashboard.reviewCount === 0}>
-            {t('dashboard.csv')}
-          </Button>
-          <Button variant="secondary" icon="printer" onClick={printReport} disabled={!report}>
-            {t('dashboard.pdf')}
-          </Button>
-          <Button onClick={startAnalysis} icon="sparkles" loading={starting || Boolean(running)} disabled={dashboard.reviewCount === 0}>
-            {running ? t('dashboard.analyzing') : report ? t('dashboard.reanalyze') : t('dashboard.analyze')}
-          </Button>
+          {report && (
+            <div className="mt-5 border-white/20 border-t pt-4">
+              <Finding report={report} comparison={comparison} className="text-lg text-white" />
+            </div>
+          )}
         </div>
       </header>
-
-      {report && <Finding report={report} comparison={comparison} />}
 
       {editing && (
         <BusinessSettings
@@ -282,11 +316,17 @@ export function DashboardPage() {
           />
 
           <div className="grid gap-4 lg:grid-cols-5">
-            <Card title={t('recs.title')} subtitle={usesLlm ? t('recs.byAi') : t('recs.byTemplates')} className="lg:col-span-3">
+            <Card
+              title={t('recs.title')}
+              icon="target"
+              subtitle={usesLlm ? t('recs.byAi') : t('recs.byTemplates')}
+              className="lg:col-span-3"
+            >
               <RecommendationList items={report.recommendations} topics={report.stats.topics} />
             </Card>
             <div className="space-y-4 lg:col-span-2">
               <Card
+                icon="smile"
                 title={t('sentimentCard.title')}
                 subtitle={t('sentimentCard.subtitle', {
                   count: report.stats.totalReviews,
@@ -295,14 +335,14 @@ export function DashboardPage() {
               >
                 <SentimentBar sentiment={report.stats.sentiment} />
               </Card>
-              <Card title={t('topics.title')} subtitle={t('topics.subtitle')}>
+              <Card title={t('topics.title')} subtitle={t('topics.subtitle')} icon="tag">
                 <TopicChart topics={report.stats.topics} selected={topicFilter} onSelect={setTopicFilter} />
               </Card>
             </div>
           </div>
 
           <div className="grid items-start gap-4 lg:grid-cols-5">
-            <Card title={t('trend.title')} subtitle={t('trend.subtitle')} action={<Legend />} className="lg:col-span-3">
+            <Card title={t('trend.title')} subtitle={t('trend.subtitle')} icon="chart" action={<Legend />} className="lg:col-span-3">
               <TrendChart businessId={business.id} refreshKey={refreshKey} />
             </Card>
             {importCard}
@@ -310,6 +350,7 @@ export function DashboardPage() {
 
           <div className="grid items-start gap-4 lg:grid-cols-5">
             <Card
+              icon="sparkles"
               title={t('evolution.title')}
               subtitle={
                 dashboard.previousRun
@@ -320,7 +361,7 @@ export function DashboardPage() {
             >
               {comparison ? <TopicEvolution comparison={comparison} /> : <p className="text-sm text-ink-2">{t('evolution.emptyText')}</p>}
             </Card>
-            <Card title={t('history.title')} className="lg:col-span-2 print:hidden">
+            <Card title={t('history.title')} icon="clock" className="lg:col-span-2 print:hidden">
               <AnalysisHistory runs={dashboard.history} currentId={reportRun?.id ?? null} />
             </Card>
           </div>

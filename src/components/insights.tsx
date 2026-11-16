@@ -5,9 +5,27 @@ import type { MessageKey } from '../i18n/messages';
 import { Icon, type IconName } from './icons';
 
 const PRIORITY: Record<Priority, { label: MessageKey; icon: IconName; text: string; bar: string; chip: string }> = {
-  alta: { label: 'priority.alta', icon: 'alert', text: 'text-critical', bar: 'bg-critical', chip: 'bg-critical-soft text-critical' },
-  media: { label: 'priority.media', icon: 'clock', text: 'text-warning', bar: 'bg-warning', chip: 'bg-warning-soft text-warning' },
-  baja: { label: 'priority.baja', icon: 'check', text: 'text-ink-3', bar: 'bg-line', chip: 'bg-brand-soft text-ink-2' },
+  alta: {
+    label: 'priority.alta',
+    icon: 'alert',
+    text: 'text-critical',
+    bar: 'bg-critical',
+    chip: 'bg-critical-soft text-critical',
+  },
+  media: {
+    label: 'priority.media',
+    icon: 'clock',
+    text: 'text-warning',
+    bar: 'bg-warning',
+    chip: 'bg-warning-soft text-warning',
+  },
+  baja: {
+    label: 'priority.baja',
+    icon: 'check',
+    text: 'text-ink-3',
+    bar: 'bg-line',
+    chip: 'bg-brand-soft text-ink-2',
+  },
 };
 
 interface Tile {
@@ -16,6 +34,9 @@ interface Tile {
   note: string;
   small?: boolean;
   extra?: ReactNode;
+  /** Color del valor y de la marca superior: los datos de sentimiento llevan su color de siempre. */
+  tone: string;
+  accent: string;
 }
 
 /** Cuatro cifras en UN contenedor dividido por líneas finas: son tipografía, no tarjetas. */
@@ -39,18 +60,29 @@ export function KpiTiles({
   );
 
   const tiles: (Tile & { key: keyof typeof extras })[] = [
-    { key: 'total', label: t('kpi.total'), value: totalReviews, note: t('kpi.topics', { count: topics.length }) },
+    {
+      key: 'total',
+      label: t('kpi.total'),
+      value: totalReviews,
+      note: t('kpi.topics', { count: topics.length }),
+      tone: 'text-ink',
+      accent: 'biz-band',
+    },
     {
       key: 'positive',
       label: t('kpi.satisfied'),
       value: unit(share(sentiment.positive)),
       note: t('kpi.positiveReviews', { count: sentiment.positive }),
+      tone: 'text-pos',
+      accent: 'bg-pos',
     },
     {
       key: 'negative',
       label: t('kpi.dissatisfied'),
       value: unit(share(sentiment.negative)),
       note: t('kpi.negativeReviews', { count: sentiment.negative }),
+      tone: 'text-neg',
+      accent: 'bg-neg',
     },
     {
       key: 'complaint',
@@ -58,19 +90,22 @@ export function KpiTiles({
       value: hasComplaint ? topComplaint!.name : t('kpi.noComplaint'),
       note: hasComplaint ? t('kpi.ofReviews', { share: number(topComplaint!.complaintShare) }) : t('kpi.noComplaintNote'),
       small: true,
+      tone: 'biz-ink',
+      accent: 'bg-warning',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-card lg:grid-cols-4">
+    <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-line bg-card lg:grid-cols-4">
       {tiles.map((t, i) => (
         <div
           key={t.label}
           className={`border-line p-5 ${i % 2 === 1 ? 'border-l' : ''} ${i >= 2 ? 'border-t lg:border-t-0' : ''} ${i === 2 ? 'lg:border-l' : ''}`}
         >
+          <span className={`mb-3 block h-1 w-10 rounded-full ${t.accent}`} aria-hidden />
           <p className="text-sm font-medium text-ink-2">{t.label}</p>
           <p
-            className={`num mt-1.5 text-ink ${t.small ? 'text-xl leading-tight font-semibold sm:leading-9' : 'text-3xl font-medium leading-9'}`}
+            className={`num mt-1.5 ${t.tone} ${t.small ? 'text-xl leading-tight font-semibold sm:leading-9' : 'text-3xl font-medium leading-9'}`}
           >
             {t.value}
           </p>
@@ -92,7 +127,8 @@ export function RecommendationList({ items, topics }: { items: Recommendation[];
       {items.map((r) => {
         const p = PRIORITY[r.priority];
         return (
-          <li key={r.rank} className="grid grid-cols-[1.5rem_1fr] gap-x-2 py-4 break-inside-avoid">
+          <li key={r.rank} className="relative grid grid-cols-[1.5rem_1fr] gap-x-2 py-4 pl-3 break-inside-avoid">
+            <span className={`absolute top-4 bottom-4 left-0 w-[3px] rounded-full ${p.bar}`} aria-hidden />
             <span className="num pt-px text-sm font-medium text-ink-3">{r.rank}.</span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
