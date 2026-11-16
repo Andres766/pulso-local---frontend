@@ -88,6 +88,27 @@ test('crear negocio, importar, analizar con IA, exportar y eliminar', async ({ p
   await expect(page.getByRole('link', { name: new RegExp(businessName) })).toHaveCount(0);
 });
 
+test('idioma y tema se cambian desde la barra y se recuerdan al recargar', async ({ page }) => {
+  await login(page);
+  // Los radios están ocultos visualmente (sr-only); se pulsa su etiqueta, como lo haría el usuario.
+  await page.getByTitle('English').click();
+  await expect(page.getByRole('heading', { name: 'My businesses' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+
+  await page.getByTitle('Dark theme').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'My businesses' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+  // De vuelta a español y tema claro para el resto del recorrido.
+  await page.getByTitle('Español').click();
+  await page.getByTitle('Tema claro').click();
+  await expect(page.getByRole('heading', { name: 'Mis negocios' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
 test('eliminar la cuenta borra el acceso', async ({ page }) => {
   await login(page);
   await page.getByRole('link', { name: 'Mi cuenta' }).click();

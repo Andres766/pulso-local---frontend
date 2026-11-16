@@ -19,7 +19,9 @@ temas, sentimiento y recomendaciones concretas, con inteligencia artificial.
   consumo de tokens.
 - Exportar a CSV y **reporte imprimible en PDF**.
 - Mi cuenta: cambio de contraseña (cierra las demás sesiones) y eliminación de la cuenta (Ley 1581 de 2012).
-- Tema claro, oscuro o según el sistema.
+- **Mis negocios** con el pulso de cada negocio: satisfechos, principal queja y variación frente al análisis anterior.
+- **Tema claro, oscuro o según el sistema**, y **interfaz en español o inglés** (selectores en la barra superior y en
+  el inicio de sesión; la preferencia se recuerda en el navegador).
 
 ## Stack
 
@@ -39,9 +41,10 @@ src/
 ├── auth/         AuthContext, guardia de rutas y safeRedirect (anti open redirect)
 ├── components/   UI base, gráficos, notificaciones, diálogo de confirmación, ErrorBoundary…
 ├── hooks/        tema, sondeo de análisis, título de página, exportación
+├── i18n/         idiomas: diccionarios es/en tipados, contexto y formato de números y fechas
 ├── pages/        Auth, Negocios, Dashboard, Mi cuenta, 404
 ├── App.tsx       mapa de rutas
-└── main.tsx      proveedores (errores, router, notificaciones, confirmación, sesión)
+└── main.tsx      proveedores (idioma, errores, router, notificaciones, confirmación, sesión)
 e2e/              pruebas end-to-end (Playwright)
 ```
 
@@ -52,6 +55,10 @@ e2e/              pruebas end-to-end (Playwright)
 - **CSRF.** Toda petición lleva `X-Requested-With: PulsoLocal`; el backend rechaza las que modifican estado sin él.
 - **Sin HTML inyectado.** React escapa todo el texto (reseñas incluidas); no se usa `dangerouslySetInnerHTML`.
   CSP estricta en `vercel.json` y `nginx.conf`.
+- **Idiomas sin librerías.** `src/i18n/messages.ts` tiene el español como fuente y el inglés tipado contra sus
+  claves: si falta una traducción, el proyecto no compila (y una prueba verifica que coincidan las variables).
+  Números, porcentajes, fechas y tiempos relativos usan `Intl` con el idioma elegido, y `<html lang>` se actualiza.
+  Lo que escribe la IA (temas y recomendaciones) queda en el idioma de las reseñas: es dato, no interfaz.
 - **Accesibilidad.** Enlace "Saltar al contenido", foco al contenido en cada navegación, títulos por página,
   notificaciones con `aria-live`, diálogo nativo `<dialog>`, radios nativos en el selector de tema, colores de
   sentimiento validados para daltonismo y gráficos con tabla equivalente.
