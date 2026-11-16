@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { describeProvider } from '../api/providers';
 import { api } from '../api/services';
@@ -9,6 +9,7 @@ import { AnalysisHistory, Delta, TopicEvolution } from '../components/evolution'
 import { ImportPanel } from '../components/ImportPanel';
 import { Icon } from '../components/icons';
 import { KpiTiles, RecommendationList, TopicQuotes } from '../components/insights';
+import { LiveBadge } from '../components/LiveBadge';
 import { ReviewsTable } from '../components/ReviewsTable';
 import { TrendChart } from '../components/TrendChart';
 import { useToast } from '../components/toast';
@@ -17,6 +18,7 @@ import { printReport, saveBlob } from '../hooks/exporting';
 import { useAnalysisPolling } from '../hooks/useAnalysisPolling';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useI18n } from '../i18n/I18nContext';
+import { useRealtimeAnalyses } from '../realtime/useRealtime';
 
 function DashboardSkeleton() {
   const { t } = useI18n();
@@ -89,14 +91,46 @@ export function DashboardPage() {
 
   const running = dashboard?.latestRun && ['pending', 'running'].includes(dashboard.latestRun.status) ? dashboard.latestRun : null;
   const toast = useToast();
-  useAnalysisPolling(running, {
-    onProgress: (current) => setDashboard((d) => (d ? { ...d, latestRun: current } : d)),
-    onFinished: (finished) => {
-      if (finished.status === 'completed') toast.success(t('dashboard.completed'));
-      else toast.error(t('dashboard.failedToast'));
-      void load();
-    },
+
+  // Un mismo final puede llegar por WebSocket y por el polling de respaldo: se avisa una sola vez.
+  const finishedRuns = useRef(new Set<string>());
+  const finish = (run: AnalysisRun) => {
+    if (finishedRuns.current.has(run.id)) return;
+    finishedRuns.current.add(run.id);
+    if (run.status === 'completed') toast.success(t('dashboard.completed'));
+    else toast.error(t('dashboard.failedToast'));
+    void load();
+  };
+  const showRun = (run: AnalysisRun) =>
+    setDashboard((d) => {
+      if (!d) return d;
+      // Un evento viejo (desordenado) no pisa al análisis más reciente.
+      if (d.latestRun && d.latestRun.id !== run.id && run.createdAt < d.latestRun.createdAt) return d;
+      return { ...d, latestRun: run };
+    });
+
+  // Tiempo real: cada cambio de estado llega por WebSocket, también si el análisis se lanzó en otra pestaña.
+  const live = useRealtimeAnalyses(id ? [id] : [], ({ run }) => {
+    showRun(run);
+    if (run.status === 'completed' || run.status === 'failed') finish(run);
   });
+
+  // Al quedar en vivo se revisa una vez el análisis en curso, por si terminó mientras se conectaba.
+  const runningId = running?.id;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: solo debe correr cuando el canal pasa a "live"
+  useEffect(() => {
+    if (live !== 'live' || !runningId) return;
+    void api.analyses
+      .get(runningId)
+      .then((run) => {
+        showRun(run);
+        if (run.status === 'completed' || run.status === 'failed') finish(run);
+      })
+      .catch(() => undefined);
+  }, [live]);
+
+  // Respaldo: sin WebSocket (red que lo bloquea, servidor reiniciándose) se consulta el estado cada 1,5 s.
+  useAnalysisPolling(live === 'live' ? null : running, { onProgress: showRun, onFinished: finish });
   const retrying = running?.status === 'pending' && running.attempts > 0;
 
   async function startAnalysis() {
@@ -175,15 +209,19 @@ export function DashboardPage() {
             <Icon name="chevronLeft" className="h-4 w-4" /> {t('dashboard.back')}
           </Link>
           <h1 className="mt-1 text-2xl font-bold text-ink">{business.name}</h1>
-          <p className="mt-1 text-sm text-ink-2">
-            {[
-              t(`category.${business.category}`),
-              business.city,
-              t('dashboard.reviewsCount', { count: dashboard.reviewCount }),
-              reportRun?.finishedAt && t('dashboard.analyzedWith', { provider: provider ?? '', date: i18n.dateTime(reportRun.finishedAt) }),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2">
+            <span>
+              {[
+                t(`category.${business.category}`),
+                business.city,
+                t('dashboard.reviewsCount', { count: dashboard.reviewCount }),
+                reportRun?.finishedAt &&
+                  t('dashboard.analyzedWith', { provider: provider ?? '', date: i18n.dateTime(reportRun.finishedAt) }),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+            <LiveBadge status={live} />
           </p>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">

@@ -95,6 +95,13 @@ export const es = {
   'provider.lexicon': 'Léxico local',
   'provider.lexiconLong': 'el léxico local',
 
+  // Tiempo real
+  'live.on': 'En vivo',
+  'live.connecting': 'Conectando…',
+  'live.off': 'Actualización periódica',
+  'live.onHint': 'Los cambios de los análisis llegan al instante por WebSocket',
+  'live.offHint': 'Sin conexión en tiempo real: se consulta el estado cada pocos segundos',
+
   // Mis negocios
   'businesses.title': 'Mis negocios',
   'businesses.loading': 'Cargando tus negocios…',
@@ -421,6 +428,12 @@ export const en: Record<MessageKey, string> = {
   'sort.rating_desc': 'Most stars first',
   'provider.lexicon': 'Local lexicon',
   'provider.lexiconLong': 'the local lexicon',
+
+  'live.on': 'Live',
+  'live.connecting': 'Connecting…',
+  'live.off': 'Periodic refresh',
+  'live.onHint': 'Analysis updates arrive instantly over WebSocket',
+  'live.offHint': 'No real-time connection: checking the status every few seconds',
 
   'businesses.title': 'My businesses',
   'businesses.loading': 'Loading your businesses…',

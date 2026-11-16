@@ -5,9 +5,11 @@ import { BUSINESS_CATEGORIES, type BusinessCategory, type BusinessPulse } from '
 import { SentimentStrip } from '../components/charts';
 import { Delta } from '../components/evolution';
 import { Icon } from '../components/icons';
+import { LiveBadge } from '../components/LiveBadge';
 import { Alert, Button, Card, EmptyState, Field, Select, Skeleton } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { type I18n, useI18n } from '../i18n/I18nContext';
+import { useRealtimeAnalyses } from '../realtime/useRealtime';
 
 /** Tintes pálidos de identidad (no son datos): cada negocio conserva el suyo en la lista. */
 const IDENTITY = [
@@ -137,6 +139,12 @@ export function BusinessesPage() {
     void load();
   }, [load]);
 
+  // Fan-out: un análisis lanzado en otra pestaña o terminado mientras se mira esta lista la actualiza sola.
+  const live = useRealtimeAnalyses(items?.map((p) => p.business.id) ?? [], ({ businessId, run }) => {
+    setItems((list) => list?.map((p) => (p.business.id === businessId ? { ...p, latestStatus: run.status } : p)) ?? list);
+    if (run.status === 'completed' || run.status === 'failed') void load();
+  });
+
   async function onCreate(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -192,7 +200,10 @@ export function BusinessesPage() {
               <h2 id="pulso-titulo" className="text-base font-semibold text-ink">
                 {t('businesses.pulseTitle')}
               </h2>
-              <span className="hidden text-xs text-ink-3 sm:inline">{t('businesses.pulseNote')}</span>
+              <span className="flex items-center gap-3">
+                <span className="hidden text-xs text-ink-3 sm:inline">{t('businesses.pulseNote')}</span>
+                <LiveBadge status={live} />
+              </span>
             </div>
             <div className={`hidden gap-x-3 border-line border-b px-5 pb-2 text-xs text-ink-3 md:grid ${COLUMNS}`} aria-hidden>
               <span />
