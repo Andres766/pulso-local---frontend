@@ -208,20 +208,19 @@ export function DashboardPage() {
           <Link to="/" className="inline-flex items-center gap-1 text-sm text-ink-2 hover:text-ink print:hidden">
             <Icon name="chevronLeft" className="h-4 w-4" /> {t('dashboard.back')}
           </Link>
-          <h1 className="mt-1 text-2xl font-bold text-ink">{business.name}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2">
-            <span>
-              {[
-                t(`category.${business.category}`),
-                business.city,
-                t('dashboard.reviewsCount', { count: dashboard.reviewCount }),
-                reportRun?.finishedAt &&
-                  t('dashboard.analyzedWith', { provider: provider ?? '', date: i18n.dateTime(reportRun.finishedAt) }),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </span>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3">
+            <h1 className="text-2xl font-bold text-ink">{business.name}</h1>
             <LiveBadge status={live} />
+          </div>
+          <p className="mt-1 text-sm text-ink-2">
+            {[
+              t(`category.${business.category}`),
+              business.city,
+              t('dashboard.reviewsCount', { count: dashboard.reviewCount }),
+              reportRun?.finishedAt && t('dashboard.analyzedWith', { provider: provider ?? '', date: i18n.dateTime(reportRun.finishedAt) }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
