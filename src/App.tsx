@@ -13,6 +13,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 const BusinessesPage = lazy(() => import('./pages/BusinessesPage').then((m) => ({ default: m.BusinessesPage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const AccountPage = lazy(() => import('./pages/AccountPage').then((m) => ({ default: m.AccountPage })));
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 
 /** Mapa de rutas de la aplicación. Las privadas comparten el Layout y exigen sesión. */
 export function App() {
@@ -31,6 +32,7 @@ export function App() {
           <Route index element={<BusinessesPage />} />
           <Route path="/negocios/:id" element={<DashboardPage />} />
           <Route path="/cuenta" element={<AccountPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

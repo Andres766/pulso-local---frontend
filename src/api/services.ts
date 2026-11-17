@@ -1,5 +1,7 @@
 import { type HttpClient, http } from './http';
 import type {
+  AdminDashboard,
+  AdminUser,
   AnalysisRun,
   Business,
   BusinessCategory,
@@ -116,10 +118,27 @@ export class RealtimeService {
   }
 }
 
+export class AdminService {
+  constructor(private readonly client: HttpClient) {}
+  dashboard() {
+    return this.client.get<AdminDashboard>('/admin/dashboard');
+  }
+  users() {
+    return this.client.get<{ items: AdminUser[] }>('/admin/users').then((r) => r.items);
+  }
+  unlock(userId: string) {
+    return this.client.post<{ user: User }>(`/admin/users/${encodeURIComponent(userId)}/unlock`);
+  }
+  retry(runId: string) {
+    return this.client.post<AnalysisRun>(`/admin/analyses/${encodeURIComponent(runId)}/retry`);
+  }
+}
+
 export const api = {
   auth: new AuthService(http),
   businesses: new BusinessService(http),
   reviews: new ReviewService(http),
   analyses: new AnalysisService(http),
   realtime: new RealtimeService(http),
+  admin: new AdminService(http),
 };

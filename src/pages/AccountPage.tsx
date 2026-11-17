@@ -1,8 +1,9 @@
 import { type FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { api } from '../api/services';
 import { useAuth } from '../auth/AuthContext';
 import { useConfirm } from '../components/confirm';
+import { Icon } from '../components/icons';
 import { PasswordChecklist } from '../components/PasswordChecklist';
 import { useToast } from '../components/toast';
 import { Alert, Button, Card, Field } from '../components/ui';
@@ -72,6 +73,14 @@ export function AccountPage() {
         <p className="mt-1 text-ink-2">
           {user?.name} · {user?.email}
         </p>
+        {user?.role === 'admin' && (
+          <Link
+            to="/admin"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-sm font-medium text-brand hover:underline"
+          >
+            <Icon name="shield" className="h-4 w-4" /> {t('nav.admin')}
+          </Link>
+        )}
       </div>
 
       <Card title={t('account.pwdTitle')} subtitle={t('account.pwdSubtitle')}>

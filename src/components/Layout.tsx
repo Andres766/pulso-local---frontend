@@ -19,9 +19,10 @@ function PageSkeleton() {
   );
 }
 
-const NAV: { to: string; label: MessageKey; end: boolean }[] = [
+const NAV: { to: string; label: MessageKey; end: boolean; adminOnly?: boolean }[] = [
   { to: '/', label: 'nav.businesses', end: true },
   { to: '/cuenta', label: 'nav.account', end: false },
+  { to: '/admin', label: 'nav.admin', end: false, adminOnly: true },
 ];
 
 export function Layout() {
@@ -58,7 +59,7 @@ export function Layout() {
               <Logo compactOnPhone />
             </Link>
             <nav aria-label={t('nav.main')} className="hidden items-center gap-1 sm:flex">
-              {NAV.map((item) => (
+              {NAV.filter((item) => !item.adminOnly || user?.role === 'admin').map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}

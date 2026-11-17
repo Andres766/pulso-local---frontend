@@ -12,6 +12,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  /** "admin" ve el panel de administración; se asigna solo desde el servidor. */
+  role: 'user' | 'admin';
 }
 
 export interface Business {
@@ -111,6 +113,41 @@ export interface BusinessPulse {
   sentiment: { positive: number; neutral: number; negative: number; averageScore: number } | null;
   topComplaint: { key: string; name: string; complaintShare: number } | null;
   positiveShareDelta: number | null;
+}
+
+/** Panel de administración: solo cifras agregadas, nunca reseñas de otros usuarios. */
+export interface AdminDashboard {
+  overview: {
+    users: number;
+    admins: number;
+    lockedUsers: number;
+    businesses: number;
+    reviews: number;
+    analyses: { completed: number; failed: number; inProgress: number };
+    llm: { calls: number; inputTokens: number; outputTokens: number };
+  };
+  usage: { day: string; analyses: number; failed: number; llmCalls: number; tokens: number }[];
+  failed: {
+    runId: string;
+    businessId: string;
+    businessName: string;
+    ownerEmail: string;
+    provider: string;
+    attempts: number;
+    error: string | null;
+    finishedAt: string | null;
+  }[];
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'user' | 'admin';
+  createdAt: string;
+  lockedUntil: string | null;
+  businesses: number;
+  reviews: number;
 }
 
 /** Reseñas de un mes según su sentimiento (último análisis). */
