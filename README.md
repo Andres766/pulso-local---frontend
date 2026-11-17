@@ -20,6 +20,8 @@ temas, sentimiento y recomendaciones concretas, con inteligencia artificial.
 - **Tiempo real por WebSocket:** el estado de cada análisis llega al instante (también a otras pestañas abiertas),
   con indicador "En vivo" y polling de respaldo si el socket no está disponible.
 - Exportar a CSV y **reporte imprimible en PDF**.
+- **Administración** (solo rol admin, en `/admin`): cifras de la plataforma, consumo de IA por día, análisis fallidos
+  con reintento y desbloqueo de cuentas. El enlace solo aparece para administradores y la API responde 403 a los demás.
 - Mi cuenta: cambio de contraseña (cierra las demás sesiones) y eliminación de la cuenta (Ley 1581 de 2012).
 - **Mis negocios** con el pulso de cada negocio: satisfechos, principal queja y variación frente al análisis anterior.
 - **Tema claro, oscuro o según el sistema**, y **interfaz en español o inglés** (selectores en la barra superior y en
